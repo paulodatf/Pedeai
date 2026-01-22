@@ -2,19 +2,16 @@ import { db } from './config.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let todosProdutos = [];
-let modoAtual = 'products';
+let modoAtual = sessionStorage.getItem('pedeai_mode') || 'products';
 let filtroChip = '';
 let filtroTexto = '';
 let animationId = null;
+let isReturning = false;
 
 function otimizarURL(url, width = 400) {
     if (!url || typeof url !== 'string') return url;
     if (!url.includes('cloudinary.com')) return url;
-
-    return url.replace(
-        /\/upload\/(.*?)(\/v\d+\/)/,
-        `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`
-    );
+    return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
 }
 
 const MAPAS_FILTROS = {
@@ -53,11 +50,9 @@ function normalizar(texto) {
     return texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 }
 
-// ALGORITMO DE ORDENAÇÃO PONDERADA
+// ALGORITMO DE JUSTIÇA - MANTIDO INTEGRALMENTE
 function aplicarAlgoritmoVisibilidade(lista) {
     const pesos = { 'vip': 5, 'premium': 3, 'basico': 1 };
-    
-    // 1. Separar produtos por plano e embaralhar cada grupo para rotatividade
     const grupos = {
         vip: lista.filter(p => p.planoLojista === 'vip').sort(() => Math.random() - 0.5),
         premium: lista.filter(p => p.planoLojista === 'premium').sort(() => Math.random() - 0.5),
@@ -68,23 +63,12 @@ function aplicarAlgoritmoVisibilidade(lista) {
     const totalVip = grupos.vip.length;
     const totalPremium = grupos.premium.length;
     const totalBasico = grupos.basico.length;
-    
     let iV = 0, iP = 0, iB = 0;
 
-    // 2. Intercalação Ponderada (Round Robin)
     while (iV < totalVip || iP < totalPremium || iB < totalBasico) {
-        // Adiciona VIPs (Peso 5)
-        for (let j = 0; j < pesos.vip && iV < totalVip; j++) {
-            resultado.push(grupos.vip[iV++]);
-        }
-        // Adiciona Premiums (Peso 3)
-        for (let j = 0; j < pesos.premium && iP < totalPremium; j++) {
-            resultado.push(grupos.premium[iP++]);
-        }
-        // Adiciona Básicos (Peso 1)
-        for (let j = 0; j < pesos.basico && iB < totalBasico; j++) {
-            resultado.push(grupos.basico[iB++]);
-        }
+        for (let j = 0; j < pesos.vip && iV < totalVip; j++) resultado.push(grupos.vip[iV++]);
+        for (let j = 0; j < pesos.premium && iP < totalPremium; j++) resultado.push(grupos.premium[iP++]);
+        for (let j = 0; j < pesos.basico && iB < totalBasico; j++) resultado.push(grupos.basico[iB++]);
     }
     return resultado;
 }
@@ -94,7 +78,6 @@ async function inicializar() {
         const snapProdutos = await getDocs(collection(db, "produtos"));
         const snapUsuarios = await getDocs(collection(db, "usuarios"));
         
-        // Mapear planos dos lojistas para acesso rápido
         const planosLojistas = {};
         snapUsuarios.forEach(u => {
             const data = u.data();
@@ -104,76 +87,79 @@ async function inicializar() {
         todosProdutos = [];
         snapProdutos.forEach(d => {
             const data = d.data();
-            if(data.promocao === 'sim' && data.promoExpira && Date.now() > data.promoExpira) {
-                data.promocao = 'nao';
-            }
-            todosProdutos.push({ 
-                id: d.id, 
-                ...data, 
-                planoLojista: planosLojistas[data.owner] || 'basico' 
-            });
+            if(data.promocao === 'sim' && data.promoExpira && Date.now() > data.promoExpira) data.promocao = 'nao';
+            todosProdutos.push({ id: d.id, ...data, planoLojista: planosLojistas[data.owner] || 'basico' });
         });
+
+        // Flag de retorno baseada em cache
+        const domCache = sessionStorage.getItem('pedeai_dom_cache');
+        isReturning = (domCache !== null);
+
+        const navAtivo = document.getElementById(`nav-${modoAtual}`);
+        if(navAtivo) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            navAtivo.classList.add('active');
+        }
+        
+        const logo = document.getElementById('main-logo');
+        if(logo) {
+            let iconHtml = modoAtual === 'restaurants' ? '<i class="fas fa-utensils"></i>' : (modoAtual === 'classifieds' ? '<i class="fas fa-bullhorn"></i>' : '<i class="fas fa-bag-shopping"></i>');
+            logo.innerHTML = `${iconHtml} Pede Aí`;
+        }
 
         renderizarCarrosselAutomatico();
         renderizarFiltros();
-        renderizarProdutos();
+
+        // Só renderiza se não houver cache ou se houver mudança de filtro
+        if (!isReturning) {
+            renderizarProdutos();
+        } else {
+            // Se estiver voltando, o DOM já foi injetado pelo HTML, apenas restaura o scroll final por segurança
+            const scrollPos = sessionStorage.getItem('pedeai_scroll');
+            if (scrollPos) window.scrollTo(0, parseInt(scrollPos));
+            isReturning = false; // Reseta flag
+        }
+
     } catch (e) { console.error("Erro:", e); }
 }
 
 function renderizarCarrosselAutomatico() {
     const track = document.getElementById('carouselTrack');
     if (!track) return;
-    
     const categoriaFirebase = modoAtual === 'restaurants' ? 'Comida' : (modoAtual === 'classifieds' ? 'Classificados' : 'Geral');
-    
-    // No carrossel (Destaques Turbo), aplicamos a mesma lógica de peso
     const poolTurbo = todosProdutos.filter(p => p.turbo === 'sim' && p.categoria === categoriaFirebase);
     const data = aplicarAlgoritmoVisibilidade(poolTurbo).slice(0, 20);
     
     if (data.length === 0) {
         document.getElementById('featuredStrip').style.display = 'none';
         return;
-    } else {
-        document.getElementById('featuredStrip').style.display = 'block';
     }
+    document.getElementById('featuredStrip').style.display = 'block';
 
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
     track.innerHTML = data.map(p => {
         const img = otimizarURL(p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/150", 300);
-        return `
-            <div class="banner-box" onclick="window.location.href='vitrine-lojista.html?seller=${p.owner}&product=${p.id}&modo=${paramModo}'">
-                <img src="${img}" loading="lazy">
-                <div class="banner-overlay"><span class="banner-price">R$ ${p.preco}</span></div>
-            </div>`;
+        return `<div class="banner-box" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')"><img src="${img}" loading="lazy"><div class="banner-overlay"><span class="banner-price">R$ ${p.preco}</span></div></div>`;
     }).join('');
     
     if (animationId) cancelAnimationFrame(animationId);
-    
     let scrollPos = track.scrollLeft;
     let isTouching = false;
     let lastTime = 0;
 
     track.addEventListener('touchstart', () => { isTouching = true; }, { passive: true });
-    track.addEventListener('touchend', () => { 
-        isTouching = false; 
-        scrollPos = track.scrollLeft; 
-    }, { passive: true });
+    track.addEventListener('touchend', () => { isTouching = false; scrollPos = track.scrollLeft; }, { passive: true });
 
     function step(timestamp) {
         if (!isTouching) {
             if (!lastTime) lastTime = timestamp;
             const elapsed = timestamp - lastTime;
-            
             if (elapsed > 16) {
                 scrollPos += 0.8; 
-                if (scrollPos >= (track.scrollWidth / 2)) {
-                    scrollPos = 0;
-                }
+                if (scrollPos >= (track.scrollWidth / 2)) scrollPos = 0;
                 track.scrollLeft = scrollPos;
                 lastTime = timestamp;
             }
-        } else {
-            scrollPos = track.scrollLeft; 
         }
         animationId = requestAnimationFrame(step);
     }
@@ -193,18 +179,14 @@ function renderizarFiltros() {
 function renderizarProdutos() {
     const grid = document.getElementById('grid-produtos');
     if (!grid) return;
-    grid.innerHTML = "";
     
-    // Primeiro filtramos os produtos baseados na busca e categoria
     let filtrados = todosProdutos.filter(p => {
         if (modoAtual === 'restaurants' && p.categoria !== 'Comida') return false;
         if (modoAtual === 'products' && p.categoria !== 'Geral') return false;
         if (modoAtual === 'classifieds' && p.categoria !== 'Classificados') return false;
-        
         const textoCard = normalizar(`${p.nome} ${p.descricao || ''}`);
         if (filtroTexto && !textoCard.includes(normalizar(filtroTexto))) return false;
         if (filtroChip === 'promocao') return p.promocao === 'sim';
-
         if (filtroChip && filtroChip !== '') {
             const keywords = MAPAS_FILTROS[modoAtual][filtroChip] || [];
             if (!keywords.some(k => textoCard.includes(normalizar(k))) && !textoCard.includes(normalizar(filtroChip))) return false;
@@ -212,74 +194,56 @@ function renderizarProdutos() {
         return true;
     });
 
-    // APLICAR O ALGORITMO DE VISIBILIDADE ANTES DE RENDERIZAR
+    // Algoritmo só roda se não for restauração de estado
     filtrados = aplicarAlgoritmoVisibilidade(filtrados);
 
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
-
-    filtrados.forEach(p => {
+    grid.innerHTML = filtrados.map(p => {
         const img = otimizarURL(p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/300", 400);
-        
         if (modoAtual === 'restaurants') {
-            grid.innerHTML += `
-                <div class="gourmet-card" onclick="window.location.href='vitrine-lojista.html?seller=${p.owner}&product=${p.id}&modo=${paramModo}'">
+            return `<div class="gourmet-card" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')">
                     <div class="gourmet-img-box"><img src="${img}" loading="lazy"></div>
-                    <div class="gourmet-body">
-                        <div class="gourmet-name">${p.nome}</div>
-                        <div class="gourmet-price">R$ ${p.preco}</div>
-                    </div>
+                    <div class="gourmet-body"><div class="gourmet-name">${p.nome}</div><div class="gourmet-price">R$ ${p.preco}</div></div>
                 </div>`;
         } else {
             const isRoupa = p.tipoProduto === 'roupa';
             const temTamanhos = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) || (p.numeracoes && p.numeracoes.trim() !== "");
-            
-            let btnHTML = "";
-            if (isRoupa && temTamanhos) {
-                btnHTML = `<button class="btn-add-main">Escolher opções</button>`;
-            } else {
-                btnHTML = `
-                    <button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${img}')">
-                        Adicionar
-                    </button>`;
-            }
-
-            grid.innerHTML += `
-                <div class="product-card" onclick="window.location.href='vitrine-lojista.html?seller=${p.owner}&product=${p.id}&modo=${paramModo}'">
+            let btnHTML = (isRoupa && temTamanhos) ? `<button class="btn-add-main">Escolher opções</button>` : 
+                `<button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${img}')">Adicionar</button>`;
+            return `<div class="product-card" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')">
                     <div class="img-box"><img src="${img}" loading="lazy"></div>
-                    <div class="card-body">
-                        <div class="p-name">${p.nome}</div>
-                        <div class="p-price">R$ ${p.preco}</div>
-                        ${btnHTML}
-                    </div>
+                    <div class="card-body"><div class="p-name">${p.nome}</div><div class="p-price">R$ ${p.preco}</div>${btnHTML}</div>
                 </div>`;
         }
-    });
+    }).join('');
 }
+
+window.navegarParaProduto = (owner, id, modo) => {
+    // Cacheia o DOM atual e a posição antes de sair
+    const grid = document.getElementById('grid-produtos');
+    if (grid) sessionStorage.setItem('pedeai_dom_cache', grid.innerHTML);
+    sessionStorage.setItem('pedeai_scroll', window.scrollY);
+    window.location.href = `vitrine-lojista.html?seller=${owner}&product=${id}&modo=${modo}`;
+};
 
 window.filtrarPorPalavra = (termo, elemento) => {
     filtroChip = normalizar(termo);
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     elemento.classList.add('active');
+    sessionStorage.removeItem('pedeai_dom_cache'); // Filtro novo exige nova renderização
     renderizarProdutos();
 };
 
 window.addEventListener('changeMode', (e) => {
+    if (modoAtual === e.detail && !isReturning) return;
     modoAtual = e.detail;
     filtroChip = ''; 
-    
     const logo = document.getElementById('main-logo');
     if(logo) {
-        let iconHtml = '';
-        if (modoAtual === 'restaurants') {
-            iconHtml = '<i class="fas fa-utensils"></i>';
-        } else if (modoAtual === 'classifieds') {
-            iconHtml = '<i class="fas fa-bullhorn"></i>';
-        } else {
-            iconHtml = '<i class="fas fa-bag-shopping"></i>';
-        }
+        let iconHtml = modoAtual === 'restaurants' ? '<i class="fas fa-utensils"></i>' : (modoAtual === 'classifieds' ? '<i class="fas fa-bullhorn"></i>' : '<i class="fas fa-bag-shopping"></i>');
         logo.innerHTML = `${iconHtml} Pede Aí`;
     }
-
+    sessionStorage.removeItem('pedeai_dom_cache');
     renderizarCarrosselAutomatico();
     renderizarFiltros();
     renderizarProdutos();
@@ -287,6 +251,7 @@ window.addEventListener('changeMode', (e) => {
 
 document.getElementById('inputBusca')?.addEventListener('input', (e) => {
     filtroTexto = e.target.value;
+    sessionStorage.removeItem('pedeai_dom_cache');
     renderizarProdutos();
 });
 

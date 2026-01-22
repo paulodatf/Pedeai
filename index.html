@@ -37,7 +37,6 @@
         }
         .header-top { display: flex; justify-content: space-between; align-items: center; color: white; max-width: 1200px; margin: 0 auto; }
         
-        /* ESTILIZAÇÃO DO LOGOTIPO */
         .logo-container { 
             display: flex; 
             align-items: center; 
@@ -238,13 +237,13 @@
     </div>
 
     <nav class="bottom-nav">
-        <button class="nav-item active" onclick="setAppMode('products', this)">
+        <button id="nav-products" class="nav-item active" onclick="setAppMode('products', this)">
             <i class="fas fa-shopping-bag"></i><span>Produtos</span>
         </button>
-        <button class="nav-item" onclick="setAppMode('restaurants', this)">
+        <button id="nav-restaurants" class="nav-item" onclick="setAppMode('restaurants', this)">
             <i class="fas fa-utensils"></i><span>Gourmet</span>
         </button>
-        <button class="nav-item" onclick="setAppMode('classifieds', this)">
+        <button id="nav-classifieds" class="nav-item" onclick="setAppMode('classifieds', this)">
             <i class="fas fa-bullhorn"></i><span>Anúncios</span>
         </button>
     </nav>
@@ -257,8 +256,29 @@
             document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
             document.body.className = 'mode-' + mode;
+            sessionStorage.setItem('pedeai_mode', mode);
+            // Limpa cache ao trocar de modo manualmente
+            sessionStorage.removeItem('pedeai_dom_cache');
             window.dispatchEvent(new CustomEvent('changeMode', { detail: mode }));
         }
+
+        (function() {
+            const savedMode = sessionStorage.getItem('pedeai_mode');
+            if (savedMode) {
+                document.body.className = 'mode-' + savedMode;
+            }
+            
+            // Restauração imediata do DOM se disponível para evitar "pulo"
+            const domCache = sessionStorage.getItem('pedeai_dom_cache');
+            if (domCache && window.performance.navigation.type === 2) { // Type 2 é "Back/Forward"
+                document.addEventListener('DOMContentLoaded', () => {
+                    const grid = document.getElementById('grid-produtos');
+                    if (grid) grid.innerHTML = domCache;
+                    const scrollPos = sessionStorage.getItem('pedeai_scroll');
+                    if (scrollPos) window.scrollTo(0, parseInt(scrollPos));
+                });
+            }
+        })();
     </script>
 </body>
 </html>
