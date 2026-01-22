@@ -3,53 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro Lojista | Pede Aí</title>
+    <title>Cadastro | Pede Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --shopee-orange: #ee4d2d; --bg-gray: #f5f5f5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-gray); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .card { background: white; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
-        input { width: 100%; padding: 14px; margin: 10px 0; border: 1.5px solid #eee; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
-        button { width: 100%; padding: 15px; background: var(--shopee-orange); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .plan-option { border: 2px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; cursor: pointer; text-align: left; transition: 0.3s; }
-        .plan-option:hover { border-color: var(--shopee-orange); }
-        .plan-option.selected { border-color: var(--shopee-orange); background: #fff5f2; }
-        .plan-option h4 { margin: 0; color: var(--shopee-orange); }
-        .plan-option p { margin: 5px 0 0; font-size: 13px; color: #666; }
+        :root { --primary-orange: #ee4d2d; --ai-green: #27ae60; --white: #ffffff; }
+        body, html { margin: 0; padding: 0; min-height: 100%; font-family: 'Segoe UI', sans-serif; background-color: var(--primary-orange); color: var(--white); }
+        .wrapper { display: flex; flex-direction: column; align-items: center; padding: 50px 30px; text-align: center; box-sizing: border-box; }
+        
+        .logo-text { font-size: 38px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 5px; }
+        .ai-badge { background-color: var(--ai-green); color: var(--white); padding: 1px 10px; border-radius: 50px; font-size: 26px; font-style: italic; }
+        .slogan { font-size: 14px; font-weight: 300; opacity: 0.9; margin-bottom: 30px; }
+
+        .card { width: 100%; max-width: 320px; }
+        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.6); padding: 12px 0; margin-bottom: 15px; color: var(--white); font-size: 16px; text-align: center; outline: none; }
+        input::placeholder { color: rgba(255,255,255,0.7); }
+        
+        .whatsapp-input-container { position: relative; display: flex; align-items: center; justify-content: center; }
+        .prefix { position: absolute; left: 0; color: rgba(255,255,255,0.7); font-size: 16px; }
+
+        .btn-main { width: 100%; background-color: var(--white); color: var(--primary-orange); border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 15px; margin-top: 20px; cursor: pointer; text-transform: uppercase; }
+        
+        .plan-option { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); border-radius: 12px; padding: 15px; margin-bottom: 10px; cursor: pointer; text-align: left; transition: 0.3s; }
+        .plan-option.selected { background: var(--white); border-color: var(--white); }
+        .plan-option.selected h4, .plan-option.selected p { color: var(--primary-orange); }
+        .plan-option h4 { margin: 0; color: var(--white); font-size: 14px; text-transform: uppercase; }
+        .plan-option p { margin: 5px 0 0; font-size: 12px; color: rgba(255,255,255,0.8); line-height: 1.4; }
+
+        .support-container { margin-top: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0.7; font-size: 13px; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div id="app-container">
+    <div class="wrapper" id="app-container">
         <div class="card" id="step-1">
-            <h2 style="color:var(--shopee-orange)">Criar Conta</h2>
+            <div class="logo-text">Pede <span class="ai-badge">Ai</span></div>
+            <div class="slogan">Comece a vender hoje mesmo</div>
+            
             <input type="text" id="nomeLoja" placeholder="Nome da Loja">
             <input type="email" id="email" placeholder="E-mail de Acesso">
-            <input type="password" id="senha" placeholder="Senha">
-            <div style="position:relative; display:flex; align-items:center;">
-                <span style="position:absolute; left:14px; font-weight:bold; color:#555;">+55</span>
-                <input type="tel" id="whats" placeholder="WhatsApp (DDD + Número)" style="padding-left:50px;">
+            <input type="password" id="senha" placeholder="Crie uma Senha">
+            <div class="whatsapp-input-container">
+                <span class="prefix">+55</span>
+                <input type="tel" id="whats" placeholder="WhatsApp (DDD + Número)" style="padding-left: 35px;">
             </div>
-            <button id="btnProsseguir">PROSSEGUIR</button>
+            <button id="btnProsseguir" class="btn-main">PROSSEGUIR</button>
+            <a href="login.html" style="color:white; display:block; margin-top:20px; font-size:14px; text-decoration:none; opacity:0.8;">Voltar ao Login</a>
         </div>
 
         <div class="card" id="step-2" style="display:none;">
-            <h2 style="color:var(--shopee-orange)">Escolha seu Plano</h2>
-            
+            <h3 style="margin-bottom:20px;">Escolha seu Plano</h3>
             <div class="plan-option" onclick="selectPlan('basico', this)">
-                <h4>PLANO BÁSICO - R$35</h4>
-                <p>• 40 produtos • 1 turbo<br>• Categoria: Comida OU Geral</p>
+                <h4>BÁSICO - R$35</h4>
+                <p>• 40 produtos • 1 turbo • Comida OU Geral</p>
             </div>
-
             <div class="plan-option" onclick="selectPlan('premium', this)">
-                <h4>PLANO PREMIUM - R$60</h4>
-                <p>• 70 produtos • 3 turbos<br>• Comida E Geral liberados</p>
+                <h4>PREMIUM - R$60</h4>
+                <p>• 70 produtos • 3 turbos • Comida E Geral</p>
             </div>
-
             <div class="plan-option" onclick="selectPlan('vip', this)">
-                <h4>PLANO VIP - R$100</h4>
-                <p>• Produtos ilimitados • 5 turbos<br>• Comida E Geral liberados</p>
+                <h4>VIP - R$100</h4>
+                <p>• Ilimitado • 5 turbos • Acesso Total</p>
             </div>
+            <button id="btnFinalizar" class="btn-main">FINALIZAR CADASTRO</button>
+        </div>
 
-            <button id="btnFinalizar" style="margin-top:15px;">FINALIZAR CADASTRO</button>
+        <div class="support-container" onclick="window.location.href='#'">
+            <i class="fab fa-whatsapp"></i>
+            <span>Suporte</span>
         </div>
     </div>
 
@@ -58,12 +77,6 @@
         import { collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
         let selectedPlan = null;
-        const whatsInput = document.getElementById('whats');
-
-        whatsInput.addEventListener('input', function() {
-            this.value = this.value.replace(/\D/g, '');
-        });
-
         window.selectPlan = (plan, el) => {
             selectedPlan = plan;
             document.querySelectorAll('.plan-option').forEach(opt => opt.classList.remove('selected'));
@@ -75,56 +88,37 @@
             const email = document.getElementById('email').value.trim();
             const senha = document.getElementById('senha').value.trim();
             const whatsapp = document.getElementById('whats').value.trim();
-
             if (!nomeLoja || !email || !senha || !whatsapp) return alert("Preencha todos os campos!");
-            
             document.getElementById('step-1').style.display = 'none';
             document.getElementById('step-2').style.display = 'block';
         };
 
         document.getElementById('btnFinalizar').onclick = async () => {
             if (!selectedPlan) return alert("Selecione um plano!");
-
-            const nomeLoja = document.getElementById('nomeLoja').value.trim();
-            const email = document.getElementById('email').value.trim().toLowerCase();
-            const senha = document.getElementById('senha').value.trim();
-            const whatsapp = "+55" + document.getElementById('whats').value.trim();
             const btn = document.getElementById('btnFinalizar');
-
             btn.disabled = true; btn.innerText = "PROCESSANDO...";
-
             try {
+                const email = document.getElementById('email').value.trim().toLowerCase();
                 const q = query(collection(db, "usuarios"), where("email", "==", email));
                 const snap = await getDocs(q);
                 if (!snap.empty) {
                     alert("E-mail já cadastrado.");
                     btn.disabled = false; btn.innerText = "FINALIZAR CADASTRO"; return;
                 }
-
                 await addDoc(collection(db, "usuarios"), {
-                    nomeLoja,
-                    email,
-                    senha,
-                    whatsapp,
-                    status: "pendente",
-                    planoAtivo: selectedPlan,
-                    createdAt: new Date()
+                    nomeLoja: document.getElementById('nomeLoja').value.trim(),
+                    email, senha: document.getElementById('senha').value.trim(),
+                    whatsapp: "+55" + document.getElementById('whats').value.trim(),
+                    status: "pendente", planoAtivo: selectedPlan, createdAt: new Date()
                 });
-                
                 document.getElementById('app-container').innerHTML = `
                     <div class="card">
-                        <h2 style="color:#ee4d2d">Cadastro Realizado!</h2>
-                        <p style="font-size:16px; color:#333; line-height:1.6;">
-                            Seu plano <b>${selectedPlan.toUpperCase()}</b> foi registrado.<br><br>
-                            Você já pode fazer login, mas as publicações estarão bloqueadas até que o administrador autorize seu acesso.
-                        </p>
-                        <button onclick="window.location.href='login.html'">IR PARA LOGIN</button>
+                        <i class="fas fa-check-circle" style="font-size:50px; margin-bottom:20px;"></i>
+                        <h2>Sucesso!</h2>
+                        <p>Cadastro enviado para análise. Aguarde a liberação do administrador.</p>
+                        <button class="btn-main" onclick="window.location.href='login.html'">IR PARA LOGIN</button>
                     </div>`;
-            } catch (e) {
-                console.error(e);
-                alert("Erro ao cadastrar.");
-                btn.disabled = false;
-            }
+            } catch (e) { alert("Erro ao cadastrar."); btn.disabled = false; }
         };
     </script>
 </body>

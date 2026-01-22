@@ -1,65 +1,68 @@
 <!DOCTYPE html>
-<html lang="pt-pt">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Entrar | Pede Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; background: #f4f4f4; }
-        .box { background: white; padding: 20px; border-radius: 8px; width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #ee4d2d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button:disabled { background: #ccc; cursor: not-allowed; }
-        .tabs { display: flex; justify-content: space-around; margin-bottom: 15px; cursor: pointer; }
-        .active { border-bottom: 2px solid #ee4d2d; color: #ee4d2d; }
+        :root { --primary-orange: #ee4d2d; --ai-green: #27ae60; --white: #ffffff; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background-color: var(--primary-orange); overflow: hidden; }
+        .wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; color: var(--white); text-align: center; padding: 0 30px; box-sizing: border-box; }
+        
+        .logo-container { margin-bottom: 5px; }
+        .logo-text { font-size: 48px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .ai-badge { background-color: var(--ai-green); color: var(--white); padding: 2px 12px; border-radius: 50px; font-size: 32px; font-style: italic; }
+        
+        .slogan { font-size: 16px; font-weight: 300; opacity: 0.9; margin-bottom: 40px; letter-spacing: 0.5px; }
+        
+        .icon-row { display: flex; justify-content: center; gap: 40px; margin-bottom: 50px; }
+        .icon-item { font-size: 32px; opacity: 0.8; }
+        
+        .form-container { width: 100%; max-width: 300px; }
+        input { width: 100%; background: transparent; border: none; border-bottom: 1px solid rgba(255,255,255,0.6); padding: 12px 0; margin-bottom: 15px; color: var(--white); font-size: 16px; text-align: center; outline: none; transition: 0.3s; }
+        input::placeholder { color: rgba(255,255,255,0.7); }
+        input:focus { border-bottom-color: var(--white); }
+        
+        .btn-main { width: 100%; background-color: var(--white); color: var(--primary-orange); border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 16px; margin-top: 25px; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .btn-main:disabled { background-color: rgba(255,255,255,0.5); cursor: not-allowed; }
+        
+        .link-cadastrar { margin-top: 25px; color: var(--white); text-decoration: none; font-size: 14px; display: inline-block; border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 2px; }
+        
+        .support-container { position: absolute; bottom: 30px; display: flex; align-items: center; gap: 8px; opacity: 0.7; font-size: 13px; cursor: pointer; }
+        .support-container i { font-size: 16px; }
     </style>
 </head>
 <body>
 
-<div class="box">
-    <div class="tabs">
-        <span id="tL" class="active">LOGIN</span>
-        <span id="tC">CADASTRO</span>
+<div class="wrapper">
+    <div class="logo-container">
+        <div class="logo-text">Pede <span class="ai-badge">Ai</span></div>
+    </div>
+    <div class="slogan">Seu marketplace de vendas completo</div>
+
+    <div class="icon-row">
+        <i class="fas fa-box icon-item"></i>
+        <i class="fas fa-hamburger icon-item"></i>
+        <i class="fas fa-bullhorn icon-item"></i>
     </div>
 
-    <div id="areaLogin">
-        <input type="email" id="emailL" placeholder="Seu e-mail">
-        <input type="password" id="senhaL" placeholder="Sua senha">
-        <button id="btnEntrar">ENTRAR NO PAINEL</button>
+    <div class="form-container" id="areaLogin">
+        <input type="email" id="emailL" placeholder="E-mail">
+        <input type="password" id="senhaL" placeholder="Senha">
+        <button id="btnEntrar" class="btn-main">ENTRAR NO PAINEL</button>
+        <a href="cadastro.html" class="link-cadastrar">Cadastrar-se</a>
     </div>
 
-    <div id="areaCadastro" style="display:none">
-        <input type="text" id="nomeC" placeholder="Nome da Loja">
-        <input type="email" id="emailC" placeholder="E-mail da Loja">
-        <input type="password" id="senhaC" placeholder="Senha">
-        <input type="tel" id="whatsC" placeholder="WhatsApp (DDD + Numero)">
-        <button id="btnCadastrar">SOLICITAR ACESSO</button>
+    <div class="support-container" onclick="window.location.href='#'">
+        <i class="fab fa-whatsapp"></i>
+        <span>Suporte</span>
     </div>
 </div>
 
 <script type="module">
-    import { realizarLogin, cadastrarLojista } from './login.js';
+    import { realizarLogin } from './login.js';
 
-    // Alternância de abas (Lógica visual movida para dentro do módulo para evitar erros de escopo)
-    const tabL = document.getElementById('tL');
-    const tabC = document.getElementById('tC');
-    const areaLogin = document.getElementById('areaLogin');
-    const areaCadastro = document.getElementById('areaCadastro');
-
-    tabL.onclick = () => {
-        areaLogin.style.display = 'block';
-        areaCadastro.style.display = 'none';
-        tabL.className = 'active';
-        tabC.className = '';
-    };
-
-    tabC.onclick = () => {
-        areaLogin.style.display = 'none';
-        areaCadastro.style.display = 'block';
-        tabL.className = '';
-        tabC.className = 'active';
-    };
-
-    // LIGAMENTO DOS EVENTOS DE CLIQUE (FIX)
     document.getElementById('btnEntrar').addEventListener('click', async () => {
         const email = document.getElementById('emailL').value.trim();
         const senha = document.getElementById('senhaL').value.trim();
@@ -77,27 +80,6 @@
         
         btn.disabled = false;
         btn.innerText = "ENTRAR NO PAINEL";
-    });
-
-    document.getElementById('btnCadastrar').addEventListener('click', async () => {
-        const nome = document.getElementById('nomeC').value.trim();
-        const email = document.getElementById('emailC').value.trim();
-        const senha = document.getElementById('senhaC').value.trim();
-        const whats = document.getElementById('whatsC').value.trim();
-
-        if (!nome || !email || !senha || !whats) {
-            alert("Preencha todos os campos.");
-            return;
-        }
-
-        const btn = document.getElementById('btnCadastrar');
-        btn.disabled = true;
-        btn.innerText = "ENVIANDO...";
-
-        await cadastrarLojista(nome, email, senha, whats);
-
-        btn.disabled = false;
-        btn.innerText = "SOLICITAR ACESSO";
     });
 </script>
 
