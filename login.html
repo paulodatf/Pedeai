@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Entrar | Pede Aí</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; background: #f4f4f4; }
+        .box { background: white; padding: 20px; border-radius: 8px; width: 350px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #ee4d2d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .tabs { display: flex; justify-content: space-around; margin-bottom: 15px; cursor: pointer; }
+        .active { border-bottom: 2px solid #ee4d2d; color: #ee4d2d; }
+    </style>
+</head>
+<body>
+
+<div class="box">
+    <div class="tabs">
+        <span id="tL" class="active">LOGIN</span>
+        <span id="tC">CADASTRO</span>
+    </div>
+
+    <div id="areaLogin">
+        <input type="email" id="emailL" placeholder="Seu e-mail">
+        <input type="password" id="senhaL" placeholder="Sua senha">
+        <button id="btnEntrar">ENTRAR NO PAINEL</button>
+    </div>
+
+    <div id="areaCadastro" style="display:none">
+        <input type="text" id="nomeC" placeholder="Nome da Loja">
+        <input type="email" id="emailC" placeholder="E-mail da Loja">
+        <input type="password" id="senhaC" placeholder="Senha">
+        <input type="tel" id="whatsC" placeholder="WhatsApp (DDD + Numero)">
+        <button id="btnCadastrar">SOLICITAR ACESSO</button>
+    </div>
+</div>
+
+<script type="module">
+    import { realizarLogin, cadastrarLojista } from './login.js';
+
+    // Alternância de abas (Lógica visual movida para dentro do módulo para evitar erros de escopo)
+    const tabL = document.getElementById('tL');
+    const tabC = document.getElementById('tC');
+    const areaLogin = document.getElementById('areaLogin');
+    const areaCadastro = document.getElementById('areaCadastro');
+
+    tabL.onclick = () => {
+        areaLogin.style.display = 'block';
+        areaCadastro.style.display = 'none';
+        tabL.className = 'active';
+        tabC.className = '';
+    };
+
+    tabC.onclick = () => {
+        areaLogin.style.display = 'none';
+        areaCadastro.style.display = 'block';
+        tabL.className = '';
+        tabC.className = 'active';
+    };
+
+    // LIGAMENTO DOS EVENTOS DE CLIQUE (FIX)
+    document.getElementById('btnEntrar').addEventListener('click', async () => {
+        const email = document.getElementById('emailL').value.trim();
+        const senha = document.getElementById('senhaL').value.trim();
+        
+        if (!email || !senha) {
+            alert("Preencha e-mail e senha.");
+            return;
+        }
+
+        const btn = document.getElementById('btnEntrar');
+        btn.disabled = true;
+        btn.innerText = "CARREGANDO...";
+        
+        await realizarLogin(email, senha);
+        
+        btn.disabled = false;
+        btn.innerText = "ENTRAR NO PAINEL";
+    });
+
+    document.getElementById('btnCadastrar').addEventListener('click', async () => {
+        const nome = document.getElementById('nomeC').value.trim();
+        const email = document.getElementById('emailC').value.trim();
+        const senha = document.getElementById('senhaC').value.trim();
+        const whats = document.getElementById('whatsC').value.trim();
+
+        if (!nome || !email || !senha || !whats) {
+            alert("Preencha todos os campos.");
+            return;
+        }
+
+        const btn = document.getElementById('btnCadastrar');
+        btn.disabled = true;
+        btn.innerText = "ENVIANDO...";
+
+        await cadastrarLojista(nome, email, senha, whats);
+
+        btn.disabled = false;
+        btn.innerText = "SOLICITAR ACESSO";
+    });
+</script>
+
+</body>
+</html>

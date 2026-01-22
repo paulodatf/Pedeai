@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pede Aí | Super Vitrine</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { 
+            --shopee-orange: #ee4d2d; 
+            --bg-gray: #f8f9fa; 
+            --food-red: #ea1d2c; 
+            --used-blue: #0077ff; 
+            --text-main: #222;
+            --text-muted: #666;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            --radius-main: 12px;
+        }
+        
+        body { 
+            margin: 0; 
+            background: var(--bg-gray); 
+            font-family: 'Inter', -apple-system, sans-serif; 
+            padding-bottom: 90px; 
+            color: var(--text-main);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        
+        header { 
+            background: var(--shopee-orange); 
+            padding: 12px 16px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; color: white; max-width: 1200px; margin: 0 auto; }
+        
+        /* ESTILIZAÇÃO DO LOGOTIPO */
+        .logo-container { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+            font-size: 22px; 
+            font-weight: 900; 
+            letter-spacing: -1px;
+            transition: all 0.3s ease;
+        }
+        .logo-container i { font-size: 18px; opacity: 0.9; }
+
+        .header-top a { font-size: 12px; font-weight: 700; background: rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 20px; color: white; text-decoration: none; }
+        
+        .search-box { 
+            background: rgba(255,255,255,1); 
+            display: flex; 
+            align-items: center; 
+            padding: 10px 14px; 
+            border-radius: 8px; 
+            max-width: 1200px; 
+            margin: 12px auto 4px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .search-box input { border: none; outline: none; width: 100%; margin-left: 10px; font-size: 14px; color: #333; -webkit-appearance: none; }
+
+        .featured-strip { 
+            background: var(--shopee-orange); 
+            padding: 8px 0 16px; 
+            overflow: hidden; 
+            position: relative;
+            max-height: 140px; 
+        }
+        
+        .carousel-track { 
+            display: flex; 
+            gap: 12px; 
+            padding: 0 16px; 
+            overflow-x: auto; 
+            scrollbar-width: none; 
+            -webkit-overflow-scrolling: touch; 
+            touch-action: pan-x; 
+            user-select: none;
+            will-change: transform;
+        }
+        .carousel-track::-webkit-scrollbar { display: none; }
+        
+        .banner-box { 
+            width: 110px; 
+            height: 110px; 
+            min-width: 110px;
+            background: #fff; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            transition: transform 0.2s;
+            position: relative;
+            flex-shrink: 0;
+            cursor: pointer;
+            -webkit-transform: translateZ(0);
+        }
+        .banner-box img { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            pointer-events: none; 
+            display: block;
+        }
+        
+        .banner-overlay {
+            position: absolute; 
+            bottom: 6px; 
+            right: 6px;
+            pointer-events: none; 
+            z-index: 2;
+        }
+        .banner-price { 
+            font-size: 10px; 
+            font-weight: 700; 
+            background: rgba(0, 0, 0, 0.7); 
+            backdrop-filter: blur(4px); 
+            -webkit-backdrop-filter: blur(4px);
+            color: #fff; 
+            padding: 3px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            border: 0.5px solid rgba(255,255,255,0.1);
+            display: inline-block;
+            pointer-events: none; 
+        }
+
+        .quick-filters { 
+            background: white; 
+            padding: 14px 0; 
+            border-bottom: 1px solid #f0f0f0; 
+            overflow-x: auto; 
+            white-space: nowrap; 
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            position: sticky;
+            top: 104px; 
+            z-index: 900;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .quick-filters::-webkit-scrollbar { display: none; }
+
+        .filter-chip { 
+            display: inline-block; padding: 8px 18px; background: #f2f2f2; 
+            border-radius: 20px; font-size: 13px; font-weight: 500; color: #555; 
+            margin-left: 10px; cursor: pointer; transition: all 0.2s;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .filter-chip:last-child { margin-right: 16px; }
+        .filter-chip.active { background: var(--shopee-orange); color: white; box-shadow: 0 4px 10px rgba(238, 77, 45, 0.3); }
+
+        .container { max-width: 1200px; margin: 16px auto; padding: 0 16px; }
+        .grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+        .product-card { 
+            background: white; border-radius: var(--radius-main); overflow: hidden; 
+            box-shadow: var(--card-shadow); border: 1px solid #f0f0f0; transition: transform 0.2s;
+        }
+        .img-box { width: 100%; aspect-ratio: 1/1; background: #f8f8f8; position: relative; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .card-body { padding: 12px; }
+        .p-name { font-size: 13px; font-weight: 500; color: #444; height: 36px; line-height: 1.4; margin-bottom: 6px; overflow: hidden; }
+        .p-price { color: var(--shopee-orange); font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+        
+        .btn-add-main {
+            width: 100%; background: #fff; border: 1.5px solid #eee; padding: 10px; 
+            border-radius: 8px; margin-top: 10px; font-weight: 700; color: #444; 
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .gourmet-card { 
+            background: white; border-radius: 16px; overflow: hidden; 
+            box-shadow: var(--card-shadow); border: 1px solid #f0f0f0;
+        }
+        .gourmet-img-box { width: 100%; aspect-ratio: 1/1; }
+        .gourmet-img-box img { width: 100%; height: 100%; object-fit: cover; }
+        .gourmet-body { padding: 14px; background: white; }
+        .gourmet-name { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
+        .gourmet-price { color: var(--food-red); font-size: 17px; font-weight: 800; }
+
+        #carrinho-flutuante {
+            bottom: 100px !important; 
+            right: 20px !important;
+            z-index: 3000 !important;
+        }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex; justify-content: space-around; padding: 8px 0 calc(env(safe-area-inset-bottom) + 8px); 
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.06); border-top: 1px solid #f0f0f0;
+            z-index: 2000;
+        }
+        .nav-item { color: #888; border: none; background: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; flex: 1; transition: 0.2s; cursor: pointer; -webkit-tap-highlight-color: transparent;}
+        .nav-item i { font-size: 20px; margin-bottom: 2px; }
+        .nav-item.active { color: var(--shopee-orange); }
+
+        body.mode-restaurants header, body.mode-restaurants .featured-strip { background: var(--food-red); }
+        body.mode-restaurants .nav-item.active { color: var(--food-red); }
+        body.mode-restaurants .filter-chip.active { background: var(--food-red); }
+        
+        body.mode-classifieds header, body.mode-classifieds .featured-strip { background: var(--used-blue); }
+        body.mode-classifieds .nav-item.active { color: var(--used-blue); }
+    </style>
+</head>
+<body class="mode-products">
+
+    <header id="dynamicHeader">
+        <div class="header-top">
+            <span id="main-logo" class="logo-container">
+                <i class="fas fa-bag-shopping"></i>
+                Pede Aí
+            </span>
+            <a href="login.html">QUERO VENDER</a>
+        </div>
+        <div class="search-box">
+            <i class="fas fa-search" style="color: #bbb;"></i>
+            <input type="text" id="inputBusca" placeholder="Busque produtos ou pratos..." enterkeyhint="search">
+        </div>
+    </header>
+
+    <div class="featured-strip" id="featuredStrip">
+        <div class="carousel-track" id="carouselTrack"></div>
+    </div>
+
+    <div class="quick-filters" id="chipContainer"></div>
+
+    <div class="container">
+        <div id="grid-produtos" class="grid-container"></div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="setAppMode('products', this)">
+            <i class="fas fa-shopping-bag"></i><span>Produtos</span>
+        </button>
+        <button class="nav-item" onclick="setAppMode('restaurants', this)">
+            <i class="fas fa-utensils"></i><span>Gourmet</span>
+        </button>
+        <button class="nav-item" onclick="setAppMode('classifieds', this)">
+            <i class="fas fa-bullhorn"></i><span>Anúncios</span>
+        </button>
+    </nav>
+
+    <script type="module" src="./index.js"></script>
+    <script type="module" src="./carrinho.js"></script>
+
+    <script>
+        function setAppMode(mode, element) {
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+            document.body.className = 'mode-' + mode;
+            window.dispatchEvent(new CustomEvent('changeMode', { detail: mode }));
+        }
+    </script>
+</body>
+</html>

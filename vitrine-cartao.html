@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vitrine Digital</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --orange: #ee4d2d; --bg: #f5f5f5; --ifood-red: #ea1d2c; --gourmet-dark: #2d2d2d; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow-x: hidden; }
+        
+        /* Cabeçalho Compacto */
+        .header-cartao { background: #fff; padding: 12px 15px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
+        .foto-cartao { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--orange); flex-shrink: 0; }
+        .info-loja-header { flex-grow: 1; text-align: left; overflow: hidden; }
+        .nome-loja-cartao { margin: 0; font-size: 15px; font-weight: 800; color: #111; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .msg-boas-vindas { font-size: 11px; color: #777; margin: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .btn-voltar-topo { color: #444; text-decoration: none; font-size: 18px; padding-right: 5px; }
+
+        /* Estilo Gourmet */
+        body.gourmet-mode { background: #fff; }
+        body.gourmet-mode .foto-cartao { border-color: var(--ifood-red); }
+        body.gourmet-mode .nome-loja-cartao { color: var(--ifood-red); }
+
+        /* Grid de Produtos */
+        .grid-produtos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+        .card-p { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #eee; cursor: pointer; }
+        .card-p img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        .card-p-info { padding: 8px; }
+        .card-p-name { font-size: 12px; font-weight: 600; color: #333; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+        .card-p-price { color: var(--orange); font-weight: 800; font-size: 14px; margin-top: 4px; }
+        body.gourmet-mode .card-p-price { color: var(--ifood-red); }
+
+        /* Botão Montar */
+        #barMontar { position: fixed; bottom: 20px; left: 0; width: 100%; padding: 0 15px; display: none; justify-content: center; z-index: 999; }
+        .btn-montar-global { width: 100%; max-width: 400px; background: var(--ifood-red); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(234, 29, 44, 0.4); text-transform: uppercase; }
+
+        /* Utilitários */
+        .tamanho-container { padding: 10px 0; }
+        .tamanho-grid { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-tamanho { border: 1px solid #ddd; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .btn-tamanho.selected { background: var(--orange); color: #fff; border-color: var(--orange); }
+        .btn-action-main { width: 100%; padding: 15px; border-radius: 8px; border: none; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body class="vitrine-cartao-page">
+
+    <header class="header-cartao">
+        <a href="index.html" class="btn-voltar-topo"><i class="fas fa-chevron-left"></i></a>
+        <img id="fotoLojista" src="" class="foto-cartao" alt="Logo">
+        <div class="info-loja-header">
+            <h1 id="nomeLojista" class="nome-loja-cartao">Carregando...</h1>
+            <p id="msgBoasVindas" class="msg-boas-vindas">Bem-vindo(a) à nossa vitrine!</p>
+        </div>
+    </header>
+
+    <div id="barMontar">
+        <button class="btn-montar-global" onclick="window.abrirConfigComida('montar_global', true)">
+            <i class="fas fa-utensils"></i> <span id="txtBarMontar">MONTAR MEU PEDIDO</span>
+        </button>
+    </div>
+
+    <main id="productDetail"></main>
+
+    <div id="overlayComida" onclick="window.fecharModalComida()" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10500; display:none;"></div>
+    <div id="modalComida" style="position:fixed; bottom:-100%; left:0; width:100%; background:#fff; z-index:11000; transition:0.4s; border-radius:20px 20px 0 0; max-height:90vh; overflow-y:auto;">
+        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:10;">
+            <h3 id="modalNome" style="margin:0; font-size:18px;">Personalizar</h3>
+            <i class="fas fa-times" onclick="window.fecharModalComida()" style="cursor:pointer; font-size:20px;"></i>
+        </div>
+        <div id="modalContent"></div>
+        <div style="padding:15px;">
+            <textarea id="gourmet-obs" style="width:100%; height:80px; padding:10px; border:1px solid #ddd; border-radius:8px; margin-bottom:10px;" placeholder="Alguma observação?"></textarea>
+            <button id="btnConfirmarConfig" class="btn-action-main" style="background:var(--ifood-red);">ADICIONAR</button>
+        </div>
+    </div>
+
+    <script src="./carrinho.js"></script>
+    <script type="module" src="./vitrine-cartao.js"></script>
+    <script>
+        window.fecharModalComida = () => {
+            document.getElementById('modalComida').style.bottom = '-100%';
+            document.getElementById('overlayComida').style.display = 'none';
+        };
+        window.selecionarTamanho = (btn, tamanho) => {
+            const container = btn.parentElement;
+            container.querySelectorAll('.btn-tamanho').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            window.tamanhoSelecionadoAtual = tamanho;
+        };
+    </script>
+</body>
+</html>

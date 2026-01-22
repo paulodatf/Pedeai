@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin Profissional | Pede Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary: #ee4d2d; --success: #28a745; --info: #17a2b8; --warning: #ffc107; --danger: #dc3545; --dark: #2c3e50; --bg: #f0f2f5; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--dark); }
+        .container { max-width: 1000px; margin: auto; }
+        header { text-align: center; margin-bottom: 30px; }
+        header h1 { font-size: 24px; color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .dash-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; border: 1px solid #e0e6ed; overflow: hidden; }
+        .card-header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.3s; background: white; }
+        .badge { background: #f0f2f5; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; color: var(--dark); }
+        .card-content { display: none; padding: 0 25px 20px; border-top: 1px solid #f1f4f8; max-height: 500px; overflow-y: auto; }
+        .card-content.active { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f4f8; }
+        .info b { display: block; font-size: 14px; color: var(--dark); }
+        .info span { display: block; font-size: 12px; color: #8898aa; margin-top: 2px; }
+        .btn { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+        .btn-approve { background: var(--success); color: white; }
+        .btn-outline { background: transparent; border: 1px solid #dcdfe6; color: #606266; }
+        .btn-zap { background: #25d366; color: white; text-decoration: none; }
+        .prod-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; background: #eee; }
+        .tag-plano { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; margin-left: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Painel Administrativo</h1>
+        <p>Gestão de Lojistas e Planos Escolhidos</p>
+    </header>
+
+    <div class="dash-card pendentes">
+        <div class="card-header" onclick="toggleCard('box-pendentes')">
+            <h3><i class="fas fa-clock" style="color:var(--danger)"></i> Aguardando Aprovação</h3>
+            <span class="badge" id="badge-pendentes">0</span>
+        </div>
+        <div id="box-pendentes" class="card-content"></div>
+    </div>
+
+    <div class="dash-card ativos">
+        <div class="card-header" onclick="toggleCard('box-ativos')">
+            <h3><i class="fas fa-store" style="color:var(--info)"></i> Lojistas Ativos</h3>
+            <span class="badge" id="badge-ativos">0</span>
+        </div>
+        <div id="box-ativos" class="card-content"></div>
+    </div>
+</div>
+
+<script type="module">
+    import { db } from './config.js';
+    import { collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    window.toggleCard = (id) => {
+        const el = document.getElementById(id);
+        const isActive = el.classList.contains('active');
+        document.querySelectorAll('.card-content').forEach(c => c.classList.remove('active'));
+        if(!isActive) el.classList.add('active');
+    };
+
+    onSnapshot(collection(db, "usuarios"), (snap) => {
+        const listP = document.getElementById('box-pendentes');
+        const listA = document.getElementById('box-ativos');
+        let cP = 0, cA = 0;
+        listP.innerHTML = listA.innerHTML = "";
+
+        snap.forEach(d => {
+            const u = d.data();
+            const id = d.id;
+            const plano = u.planoAtivo || 'Não definido';
+            const corPlano = plano === 'vip' ? '#ffc107' : (plano === 'premium' ? '#ee4d2d' : '#6c757d');
+            
+            const itemHTML = `
+                <div class="list-item">
+                    <div class="info">
+                        <b>${u.nomeLoja || 'Sem Nome'} <span class="tag-plano" style="background:${corPlano}">${plano.toUpperCase()}</span></b>
+                        <span>${u.email} • WhatsApp: ${u.whatsapp}</span>
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <a href="https://wa.me/${(u.whatsapp||'').replace(/\D/g,'')}" target="_blank" class="btn btn-zap"><i class="fab fa-whatsapp"></i> ZAP</a>
+                        ${u.status === 'pendente' ? 
+                            `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-approve">APROVAR</button>` : 
+                            `<button onclick="actionUser('${id}', 'pendente')" class="btn btn-outline">BLOQUEAR</button>`}
+                    </div>
+                </div>`;
+
+            if(u.status === 'pendente') { listP.innerHTML += itemHTML; cP++; }
+            else { listA.innerHTML += itemHTML; cA++; }
+        });
+
+        document.getElementById('badge-pendentes').innerText = cP;
+        document.getElementById('badge-ativos').innerText = cA;
+    });
+
+    window.actionUser = async (id, status) => { await updateDoc(doc(db, "usuarios", id), { status }); };
+</script>
+</body>
+</html>

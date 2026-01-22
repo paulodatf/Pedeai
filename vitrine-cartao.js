@@ -1,0 +1,150 @@
+import { db } from './config.js';
+import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const params = new URLSearchParams(window.location.search);
+const lojistaId = params.get('lojista') || params.get('seller');
+const modo = params.get('modo') || 'produto';
+const activeProductId = params.get('product');
+
+let itemAtualConfig = null;
+let lojistaInfoCache = null;
+window.tamanhoSelecionadoAtual = null;
+
+function otimizarURL(url, width = 400) {
+    if (!url || typeof url !== 'string') return url || "https://via.placeholder.com/300";
+    if (!url.includes('cloudinary.com')) return url;
+    return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
+}
+
+async function init() {
+    if (!lojistaId) return;
+    if (modo === 'gourmet') document.body.classList.add('gourmet-mode');
+    await carregarDadosEProdutos();
+}
+
+async function carregarDadosEProdutos() {
+    const mainContainer = document.getElementById('productDetail');
+    try {
+        const userDoc = await getDoc(doc(db, "usuarios", lojistaId));
+        if (userDoc.exists()) {
+            lojistaInfoCache = userDoc.data();
+            lojistaInfoCache.id = lojistaId;
+            const nome = (modo === 'gourmet' ? lojistaInfoCache.nomeLojaComida : lojistaInfoCache.nomeLojaGeral) || lojistaInfoCache.nomeLoja || "Loja";
+            const foto = (modo === 'gourmet' ? lojistaInfoCache.fotoPerfilComida : lojistaInfoCache.fotoPerfilGeral) || lojistaInfoCache.fotoPerfil;
+            
+            document.getElementById('nomeLojista').innerText = nome;
+            document.getElementById('fotoLojista').src = otimizarURL(foto, 150);
+            
+            if(modo === 'gourmet' && lojistaInfoCache.montarAtivo) {
+                document.getElementById('barMontar').style.display = 'flex';
+                document.getElementById('txtBarMontar').innerText = lojistaInfoCache.montarTitulo || 'MONTAR MEU PEDIDO';
+            }
+        }
+
+        const snap = await getDocs(collection(db, "produtos"));
+        let htmlDestaque = "";
+        let htmlGridLojista = "";
+
+        snap.forEach(d => {
+            const p = d.data();
+            if (p.owner !== lojistaId) return;
+            // Filtro rigoroso de categoria
+            if (modo === 'gourmet' && p.categoria !== 'Comida') return;
+            if (modo !== 'gourmet' && p.categoria === 'Comida') return;
+
+            const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
+            const imgCapa = otimizarURL(fotos[0], 600);
+            const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
+
+            if (d.id === activeProductId) {
+                if (modo === 'gourmet') {
+                    htmlDestaque = `
+                        <div style="padding:15px;">
+                            <img src="${imgCapa}" style="width:100%; border-radius:12px; aspect-ratio:1.2/1; object-fit:cover;">
+                            <h2 style="margin:15px 0 5px; font-size:20px;">${p.nome}</h2>
+                            <div style="color:var(--ifood-red); font-size:22px; font-weight:800; margin-bottom:10px;">R$ ${p.preco}</div>
+                            <p style="color:#666; font-size:14px; line-height:1.4;">${p.descricao || ''}</p>
+                            <button onclick="window.abrirConfigComida('${d.id}', false)" class="btn-action-main" style="background:var(--ifood-red);">ADICIONAR AO PEDIDO</button>
+                        </div><hr style="border:0; border-top:8px solid #f8f8f8;">`;
+                } else {
+                    htmlDestaque = `
+                        <div style="padding:15px;">
+                            <img src="${imgCapa}" style="width:100%; border-radius:12px;">
+                            <h2 style="margin:15px 0 5px;">${p.nome}</h2>
+                            <div style="color:var(--orange); font-size:22px; font-weight:800; margin-bottom:10px;">R$ ${p.preco}</div>
+                            ${p.tipoProduto === 'roupa' ? `
+                                <div class="tamanho-container">
+                                    <div class="tamanho-grid">${['P','M','G','GG'].map(t => `<div class="btn-tamanho" onclick="selecionarTamanho(this, '${t}')">${t}</div>`).join('')}</div>
+                                </div>` : ''}
+                            <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}')" class="btn-action-main" style="background:var(--orange);">COMPRAR AGORA</button>
+                        </div><hr style="border:0; border-top:8px solid #eee;">`;
+                }
+            } else {
+                htmlGridLojista += `
+                    <div class="card-p" onclick="window.location.href='?lojista=${lojistaId}&product=${d.id}&modo=${modo}'">
+                        <img src="${otimizarURL(fotos[0], 400)}" loading="lazy">
+                        <div class="card-p-info">
+                            <div class="card-p-name">${p.nome}</div>
+                            <div class="card-p-price">R$ ${p.preco}</div>
+                        </div>
+                    </div>`;
+            }
+        });
+
+        mainContainer.innerHTML = htmlDestaque + `<div style="padding:15px 15px 5px; font-weight:800; color:#555; font-size:13px;">MAIS PRODUTOS:</div><div class="grid-produtos">${htmlGridLojista}</div>`;
+    } catch (e) { console.error(e); }
+}
+
+window.abrirConfigComida = async (id, isGlobal = false) => {
+    if (isGlobal) {
+        itemAtualConfig = { id: 'montar_global', nome: lojistaInfoCache.montarTitulo || "Personalizado", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfilComida };
+    } else {
+        const d = await getDoc(doc(db, "produtos", id));
+        itemAtualConfig = { ...d.data(), id: d.id };
+    }
+    renderizarModalConfig();
+};
+
+function renderizarModalConfig() {
+    const content = document.getElementById('modalContent');
+    document.getElementById('modalNome').innerText = itemAtualConfig.nome;
+    let html = '';
+    if (itemAtualConfig.variacoes?.length > 0) {
+        html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ESCOLHA UMA OPÇÃO:</div>`;
+        itemAtualConfig.variacoes.forEach((v, i) => {
+            html += `<label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;"><input type="radio" name="variacao" value="${i}" ${i===0?'checked':''}> <div style="margin-left:10px; flex:1;">${v.nome}</div> <div style="color:var(--ifood-red);">+ R$ ${v.preco}</div></label>`;
+        });
+    }
+    if (itemAtualConfig.adicionais?.length > 0) {
+        html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ADICIONAIS:</div>`;
+        itemAtualConfig.adicionais.forEach((a, i) => {
+            html += `<label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;"><input type="checkbox" name="adicional" value="${i}"> <div style="margin-left:10px; flex:1;">${a.nome}</div> <div style="color:var(--ifood-red);">+ R$ ${a.preco}</div></label>`;
+        });
+    }
+    content.innerHTML = html;
+    document.getElementById('modalComida').style.bottom = '0';
+    document.getElementById('overlayComida').style.display = 'block';
+    
+    document.getElementById('btnConfirmarConfig').onclick = () => {
+        let total = 0;
+        let nomeFinal = itemAtualConfig.nome;
+        const varSel = document.querySelector('input[name="variacao"]:checked');
+        if(varSel) {
+            const v = itemAtualConfig.variacoes[varSel.value];
+            total += parseFloat(v.preco.replace(',','.'));
+            nomeFinal += ` (${v.nome})`;
+        }
+        document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
+            const a = itemAtualConfig.adicionais[cb.value];
+            total += parseFloat(a.preco.replace(',','.'));
+            nomeFinal += ` + ${a.nome}`;
+        });
+        const obs = document.getElementById('gourmet-obs').value;
+        if(obs) nomeFinal += ` [Obs: ${obs}]`;
+
+        window.adicionarAoCarrinho(itemAtualConfig.id, nomeFinal, total.toFixed(2).replace('.',','), itemAtualConfig.owner, itemAtualConfig.whatsapp, otimizarURL(itemAtualConfig.foto, 200));
+        window.fecharModalComida();
+    };
+}
+
+init();

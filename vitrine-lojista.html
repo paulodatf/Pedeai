@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vitrine Online</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="css/vitrine.css">
+    <style>
+        :root { --orange: #ee4d2d; --bg: #f5f5f5; --ifood-red: #ea1d2c; --gourmet-dark: #2d2d2d; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow-x: hidden; }
+        header { background: #fff; padding: 0 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1000; height: 50px; border-bottom: 1px solid #eee; }
+        .back-btn { color: #333; font-size: 20px; text-decoration: none; margin-right: 15px; }
+        #productDetail { min-height: 100vh; padding-bottom: 80px; }
+
+        body.gourmet-mode { background: #fff; }
+        body.gourmet-mode header { border-bottom: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        
+        .gourmet-only { display: none; }
+        body.gourmet-mode .gourmet-only { display: block; }
+
+        body.gourmet-mode .gourmet-card-container { padding: 12px; max-width: 600px; margin: 0 auto; }
+        body.gourmet-mode .gourmet-image-wrapper { width: 100%; aspect-ratio: 1.2 / 1; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 12px; background: #fcfcfc; }
+        body.gourmet-mode .gourmet-info-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+        body.gourmet-mode .gourmet-title { font-size: 20px; font-weight: 800; color: var(--gourmet-dark); line-height: 1.2; margin: 0; }
+        body.gourmet-mode .gourmet-price { font-size: 18px; font-weight: 700; color: var(--ifood-red); white-space: nowrap; }
+        body.gourmet-mode .gourmet-description { font-size: 14px; color: #666; line-height: 1.4; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
+        
+        body.gourmet-mode .obs-label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; display: block; }
+        body.gourmet-mode .obs-box { width: 100%; border: 1px solid #e2e2e2; border-radius: 8px; padding: 10px; min-height: 60px; font-family: inherit; background: #f9f9f9; resize: none; outline: none; font-size: 13px; }
+
+        body.gourmet-mode .btn-gourmet-action { width: 100%; background: var(--ifood-red); color: #fff; padding: 14px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; margin-top: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        body.gourmet-mode .gourmet-section-title { padding: 10px 16px; font-size: 16px; font-weight: 700; color: var(--gourmet-dark); border-top: 6px solid #f8f8f8; margin-top: 10px; }
+
+        /* Estilos para Seleção de Tamanho (Roupa) */
+        .tamanho-container { margin: 15px 0; }
+        .tamanho-label { font-size: 13px; font-weight: 700; color: #444; margin-bottom: 8px; display: block; }
+        .tamanho-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn-tamanho { border: 1px solid #ddd; background: #fff; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; min-width: 45px; text-align: center; }
+        .btn-tamanho.selected { border-color: var(--orange); color: var(--orange); background: #fff5f2; }
+
+        #modalComida { position: fixed; bottom: -100%; left: 0; width: 100%; background: #fff; z-index: 2100; transition: 0.4s; border-radius: 20px 20px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto; padding-bottom: 30px; }
+        #modalComida.active { bottom: 0; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2050; display: none; }
+        
+        .modal-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: #fff; z-index: 2; }
+        .config-section-title { background: #f8f8f8; padding: 10px 15px; font-size: 14px; font-weight: 700; color: #333; }
+        .config-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f2f2f2; cursor: pointer; }
+        .config-info { display: flex; flex-direction: column; }
+        .config-name { font-size: 14px; font-weight: 500; }
+        .config-price { font-size: 13px; color: #666; margin-top: 2px; }
+
+        .bar-montar-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 500px; background: var(--ifood-red); color: white; padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(234, 29, 44, 0.4); display: none; justify-content: space-between; align-items: center; z-index: 1000; cursor: pointer; animation: slideUp 0.5s ease; }
+        .bar-montar-content { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+        .bar-montar-label { font-weight: 800; font-size: 14px; letter-spacing: 0.5px; }
+        .bar-montar-icon { font-size: 18px; }
+        @keyframes slideUp { from { transform: translate(-50%, 100px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <header id="main-header"></header>
+
+    <div id="productDetail"></div>
+
+    <div id="barMontar" class="bar-montar-container" onclick="window.abrirConfigComida(null, true)">
+        <div class="bar-montar-content">
+            <span id="txtBarMontar" class="bar-montar-label">MONTAR MEU PEDIDO</span>
+            <i class="fas fa-chevron-right bar-montar-icon"></i>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="overlayComida" onclick="fecharModalComida()"></div>
+    <div id="modalComida">
+        <div class="modal-header">
+            <h3 id="modalNome" style="margin:0; font-size: 18px;">Personalizar</h3>
+            <button onclick="fecharModalComida()" style="background:none; border:none; font-size:24px;">&times;</button>
+        </div>
+        <div id="modalContent"></div>
+        <div style="padding: 15px;">
+            <button id="btnConfirmarConfig" class="btn-gourmet-action" style="margin-top:0;">ADICIONAR R$ 0,00</button>
+        </div>
+    </div>
+
+    <script src="./carrinho.js"></script>
+    <script type="module">
+        import { carregarVitrineCompleta } from './vitrine.js';
+        const params = new URLSearchParams(window.location.search);
+        if(params.get('modo') === 'gourmet') document.body.classList.add('gourmet-mode');
+        carregarVitrineCompleta();
+    </script>
+
+    <script>
+        function fecharModalComida() {
+            document.getElementById('modalComida').classList.remove('active');
+            document.getElementById('overlayComida').style.display = 'none';
+        }
+        
+        // Função auxiliar para selecionar tamanho na vitrine de produtos
+        window.selecionarTamanho = (btn, tamanho) => {
+            const container = btn.parentElement;
+            container.querySelectorAll('.btn-tamanho').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            window.tamanhoSelecionadoAtual = tamanho;
+        };
+    </script>
+</body>
+</html>
