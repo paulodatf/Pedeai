@@ -15,13 +15,17 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 
 /**
- * CONFIGURAÇÕES CENTRALIZADAS DE PLANOS ATUALIZADAS
+ * CONFIGURAÇÕES CENTRALIZADAS DE PLANOS E REGRAS DE NEGÓCIO
  */
 export const CONFIG_SISTEMA = {
     pix: "SUA-CHAVE-PIX-AQUI", 
+    mensagens: {
+        bloqueio: "Sua conta está temporariamente bloqueada. Entre em contato com o administrador para regularizar."
+    },
     planos: {
         basico: { 
             nome: "Básico", 
+            preco: 29.90,
             limiteProdutos: 40, 
             limiteFotosPorProduto: 1, 
             limiteTurbos: 1,
@@ -30,6 +34,7 @@ export const CONFIG_SISTEMA = {
         },
         premium: { 
             nome: "Premium", 
+            preco: 59.90,
             limiteProdutos: 70, 
             limiteFotosPorProduto: 3, 
             limiteTurbos: 3,
@@ -38,6 +43,7 @@ export const CONFIG_SISTEMA = {
         },
         vip: { 
             nome: "VIP", 
+            preco: 99.90,
             limiteProdutos: 9999, 
             limiteFotosPorProduto: 6, 
             limiteTurbos: 5,
@@ -52,17 +58,30 @@ export const CONFIG_SISTEMA = {
  */
 export const GetRegrasLojista = (dadosLojista) => {
     const planoChave = dadosLojista?.planoAtivo || "basico";
-    const status = dadosLojista?.status || "pendente";
+    const status = dadosLojista?.status || "pendente"; // ativo, pendente, bloqueado
     
     const configuracaoPlano = CONFIG_SISTEMA.planos[planoChave] || CONFIG_SISTEMA.planos.basico;
 
+    // Cálculo de vencimento (Exemplo: 30 dias após dataCadastro)
+    const dataCriacao = dadosLojista?.dataCadastro ? new Date(dadosLojista.dataCadastro) : new Date();
+    const hoje = new Date();
+    const diffTime = Math.abs(hoje - dataCriacao);
+    const diasPassados = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diasRestantes = 30 - diasPassados;
+
     return {
-        isAprovado: status === "ativo" || status === "aprovado",
+        isAprovado: status === "ativo",
+        isBloqueado: status === "bloqueado",
+        podeExibirProdutos: status === "ativo", // Somente ativos mostram produtos na vitrine
         planoNome: configuracaoPlano.nome,
+        valorMensal: configuracaoPlano.preco,
+        diasParaVencer: diasRestantes,
+        vencido: diasRestantes <= 0,
         limiteProdutos: configuracaoPlano.limiteProdutos,
         limiteTurbos: configuracaoPlano.limiteTurbos,
         podeAdicionarFoto: (qtdAtual) => qtdAtual < configuracaoPlano.limiteFotosPorProduto,
         temAcessoTurbo: configuracaoPlano.temDireitoTurbo,
-        corPlano: configuracaoPlano.cor
+        corPlano: configuracaoPlano.cor,
+        msgBloqueio: CONFIG_SISTEMA.mensagens.bloqueio
     };
 };

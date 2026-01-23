@@ -3,102 +3,206 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel Admin Profissional | Pede Aí</title>
+    <title>Dashboard Admin | Pede Aí</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { --primary: #ee4d2d; --success: #28a745; --info: #17a2b8; --warning: #ffc107; --danger: #dc3545; --dark: #2c3e50; --bg: #f0f2f5; }
-        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--dark); }
-        .container { max-width: 1000px; margin: auto; }
-        header { text-align: center; margin-bottom: 30px; }
-        header h1 { font-size: 24px; color: var(--primary); margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .dash-card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 15px; border: 1px solid #e0e6ed; overflow: hidden; }
-        .card-header { padding: 18px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.3s; background: white; }
-        .badge { background: #f0f2f5; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 800; color: var(--dark); }
-        .card-content { display: none; padding: 0 25px 20px; border-top: 1px solid #f1f4f8; max-height: 500px; overflow-y: auto; }
-        .card-content.active { display: block; animation: slideDown 0.3s ease-out; }
-        @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f1f4f8; }
-        .info b { display: block; font-size: 14px; color: var(--dark); }
-        .info span { display: block; font-size: 12px; color: #8898aa; margin-top: 2px; }
-        .btn { padding: 8px 14px; border-radius: 6px; border: none; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 5px; }
+        :root { 
+            --primary: #ee4d2d; 
+            --success: #28a745; 
+            --info: #17a2b8; 
+            --warning: #ffc107; 
+            --danger: #dc3545; 
+            --dark: #2c3e50; 
+            --light-bg: #f8f9fa;
+            --white: #ffffff;
+            --border: #eaedf3;
+        }
+        
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; margin: 0; color: var(--dark); }
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        header h1 { font-size: 22px; margin: 0; color: var(--dark); font-weight: 800; }
+        header p { color: #6c757d; margin: 5px 0 0 0; font-size: 14px; }
+
+        /* Stats Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .stat-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid var(--border); }
+        .stat-card small { color: #8898aa; font-size: 12px; text-transform: uppercase; font-weight: 600; }
+        .stat-card h2 { margin: 5px 0 0; font-size: 24px; color: var(--dark); }
+
+        /* Dash Cards */
+        .dash-card { background: var(--white); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid var(--border); }
+        .card-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .card-header h3 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+        .card-content { display: none; padding: 0 25px 20px; border-top: 1px solid var(--border); }
+        .card-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+        /* List Items */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f8f9fa; }
+        .list-item:last-child { border-bottom: none; }
+        .info b { font-size: 15px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+        .info span { display: block; font-size: 12px; color: #8898aa; margin-top: 4px; }
+        
+        /* Status & Badges */
+        .badge { background: #eee; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .tag-plano { padding: 2px 8px; border-radius: 4px; font-size: 10px; color: white; text-transform: uppercase; }
+        .vencimento { font-size: 11px; font-weight: bold; margin-top: 5px; }
+        .vencido { color: var(--danger); }
+        .em-dia { color: var(--success); }
+
+        /* Buttons */
+        .actions { display: flex; gap: 8px; }
+        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; transition: 0.2s; text-decoration: none; }
         .btn-approve { background: var(--success); color: white; }
-        .btn-outline { background: transparent; border: 1px solid #dcdfe6; color: #606266; }
-        .btn-zap { background: #25d366; color: white; text-decoration: none; }
-        .prod-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; background: #eee; }
-        .tag-plano { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; color: white; margin-left: 5px; }
+        .btn-block { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
+        .btn-unblock { background: #fff; border: 1px solid var(--success); color: var(--success); }
+        .btn-zap { background: #25d366; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-1px); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @media (max-width: 600px) {
+            .list-item { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .actions { width: 100%; justify-content: space-between; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Painel Administrativo</h1>
-        <p>Gestão de Lojistas e Planos Escolhidos</p>
+        <div>
+            <h1><i class="fas fa-user-shield"></i> Painel de Controle</h1>
+            <p>Gerenciamento de lojistas e faturamento</p>
+        </div>
     </header>
 
-    <div class="dash-card pendentes">
+    <div class="stats-grid">
+        <div class="stat-card">
+            <small>Aguardando</small>
+            <h2 id="stat-pendentes">0</h2>
+        </div>
+        <div class="stat-card">
+            <small>Lojistas Ativos</small>
+            <h2 id="stat-ativos">0</h2>
+        </div>
+        <div class="stat-card">
+            <small>Bloqueados</small>
+            <h2 id="stat-bloqueados" style="color:var(--danger)">0</h2>
+        </div>
+    </div>
+
+    <div class="dash-card">
         <div class="card-header" onclick="toggleCard('box-pendentes')">
-            <h3><i class="fas fa-clock" style="color:var(--danger)"></i> Aguardando Aprovação</h3>
+            <h3><i class="fas fa-clock" style="color:var(--warning)"></i> Novos Cadastros</h3>
             <span class="badge" id="badge-pendentes">0</span>
         </div>
         <div id="box-pendentes" class="card-content"></div>
     </div>
 
-    <div class="dash-card ativos">
+    <div class="dash-card">
         <div class="card-header" onclick="toggleCard('box-ativos')">
-            <h3><i class="fas fa-store" style="color:var(--info)"></i> Lojistas Ativos</h3>
+            <h3><i class="fas fa-check-circle" style="color:var(--success)"></i> Lojistas Ativos</h3>
             <span class="badge" id="badge-ativos">0</span>
         </div>
         <div id="box-ativos" class="card-content"></div>
     </div>
+
+    <div class="dash-card">
+        <div class="card-header" onclick="toggleCard('box-bloqueados')">
+            <h3><i class="fas fa-ban" style="color:var(--danger)"></i> Lojistas Bloqueados</h3>
+            <span class="badge" id="badge-bloqueados">0</span>
+        </div>
+        <div id="box-bloqueados" class="card-content"></div>
+    </div>
 </div>
 
 <script type="module">
-    import { db } from './config.js';
+    import { db, GetRegrasLojista } from './config.js';
     import { collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.toggleCard = (id) => {
         const el = document.getElementById(id);
         const isActive = el.classList.contains('active');
-        document.querySelectorAll('.card-content').forEach(c => c.classList.remove('active'));
-        if(!isActive) el.classList.add('active');
+        if(isActive) {
+            el.classList.remove('active');
+        } else {
+            // Fecha outros e abre o atual
+            document.querySelectorAll('.card-content').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+        }
     };
 
     onSnapshot(collection(db, "usuarios"), (snap) => {
         const listP = document.getElementById('box-pendentes');
         const listA = document.getElementById('box-ativos');
-        let cP = 0, cA = 0;
-        listP.innerHTML = listA.innerHTML = "";
+        const listB = document.getElementById('box-bloqueados');
+        
+        let cP = 0, cA = 0, cB = 0;
+        listP.innerHTML = listA.innerHTML = listB.innerHTML = "";
 
         snap.forEach(d => {
             const u = d.data();
             const id = d.id;
-            const plano = u.planoAtivo || 'Não definido';
-            const corPlano = plano === 'vip' ? '#ffc107' : (plano === 'premium' ? '#ee4d2d' : '#6c757d');
+            const regras = GetRegrasLojista(u);
             
+            const vencimentoTexto = regras.vencido 
+                ? `<span class="vencimento vencido"><i class="fas fa-exclamation-triangle"></i> VENCIDO HÁ ${Math.abs(regras.diasParaVencer)} DIAS</span>`
+                : `<span class="vencimento em-dia"><i class="fas fa-calendar-day"></i> Vence em ${regras.diasParaVencer} dias</span>`;
+
             const itemHTML = `
                 <div class="list-item">
                     <div class="info">
-                        <b>${u.nomeLoja || 'Sem Nome'} <span class="tag-plano" style="background:${corPlano}">${plano.toUpperCase()}</span></b>
-                        <span>${u.email} • WhatsApp: ${u.whatsapp}</span>
+                        <b>${u.nomeLoja || 'Sem Nome'} <span class="tag-plano" style="background:${regras.corPlano}">${regras.planoNome}</span></b>
+                        <span><i class="fas fa-envelope"></i> ${u.email}</span>
+                        <span><i class="fas fa-phone"></i> ${u.whatsapp}</span>
+                        ${u.status !== 'pendente' ? vencimentoTexto : ''}
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <a href="https://wa.me/${(u.whatsapp||'').replace(/\D/g,'')}" target="_blank" class="btn btn-zap"><i class="fab fa-whatsapp"></i> ZAP</a>
+                    <div class="actions">
+                        <a href="https://wa.me/${(u.whatsapp||'').replace(/\D/g,'')}" target="_blank" class="btn btn-zap" title="Cobrar via WhatsApp">
+                            <i class="fab fa-whatsapp"></i> CONTATO
+                        </a>
+                        
                         ${u.status === 'pendente' ? 
-                            `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-approve">APROVAR</button>` : 
-                            `<button onclick="actionUser('${id}', 'pendente')" class="btn btn-outline">BLOQUEAR</button>`}
+                            `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-approve">APROVAR</button>` : ''
+                        }
+
+                        ${u.status === 'ativo' ? 
+                            `<button onclick="actionUser('${id}', 'bloqueado')" class="btn btn-block">BLOQUEAR</button>` : ''
+                        }
+
+                        ${u.status === 'bloqueado' ? 
+                            `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-unblock">REATIVAR</button>` : ''
+                        }
                     </div>
                 </div>`;
 
             if(u.status === 'pendente') { listP.innerHTML += itemHTML; cP++; }
+            else if(u.status === 'bloqueado') { listB.innerHTML += itemHTML; cB++; }
             else { listA.innerHTML += itemHTML; cA++; }
         });
 
+        // Atualiza Badges
         document.getElementById('badge-pendentes').innerText = cP;
         document.getElementById('badge-ativos').innerText = cA;
+        document.getElementById('badge-bloqueados').innerText = cB;
+
+        // Atualiza Stats Superiores
+        document.getElementById('stat-pendentes').innerText = cP;
+        document.getElementById('stat-ativos').innerText = cA;
+        document.getElementById('stat-bloqueados').innerText = cB;
     });
 
-    window.actionUser = async (id, status) => { await updateDoc(doc(db, "usuarios", id), { status }); };
+    window.actionUser = async (id, novoStatus) => { 
+        try {
+            await updateDoc(doc(db, "usuarios", id), { status: novoStatus });
+        } catch (e) {
+            console.error("Erro ao atualizar status:", e);
+            alert("Erro ao realizar ação.");
+        }
+    };
 </script>
 </body>
 </html>

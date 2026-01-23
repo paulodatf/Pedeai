@@ -1,4 +1,4 @@
-import { db } from './config.js';
+import { db, GetRegrasLojista } from './config.js';
 import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const params = new URLSearchParams(window.location.search);
@@ -26,19 +26,30 @@ async function carregarDadosEProdutos() {
     const mainContainer = document.getElementById('productDetail');
     try {
         const userDoc = await getDoc(doc(db, "usuarios", lojistaId));
-        if (userDoc.exists()) {
-            lojistaInfoCache = userDoc.data();
-            lojistaInfoCache.id = lojistaId;
-            const nome = (modo === 'gourmet' ? lojistaInfoCache.nomeLojaComida : lojistaInfoCache.nomeLojaGeral) || lojistaInfoCache.nomeLoja || "Loja";
-            const foto = (modo === 'gourmet' ? lojistaInfoCache.fotoPerfilComida : lojistaInfoCache.fotoPerfilGeral) || lojistaInfoCache.fotoPerfil;
-            
-            document.getElementById('nomeLojista').innerText = nome;
-            document.getElementById('fotoLojista').src = otimizarURL(foto, 150);
-            
-            if(modo === 'gourmet' && lojistaInfoCache.montarAtivo) {
-                document.getElementById('barMontar').style.display = 'flex';
-                document.getElementById('txtBarMontar').innerText = lojistaInfoCache.montarTitulo || 'MONTAR MEU PEDIDO';
-            }
+        if (!userDoc.exists()) return;
+
+        lojistaInfoCache = userDoc.data();
+        lojistaInfoCache.id = lojistaId;
+
+        // VALIDAÇÃO DE BLOQUEIO VIA CONFIG.JS
+        const regras = GetRegrasLojista(lojistaInfoCache);
+        if (!regras.podeExibirProdutos || regras.isBloqueado) {
+            // Se bloqueado, limpa o header e encerra a execução silenciosamente
+            document.getElementById('nomeLojista').innerText = "";
+            document.getElementById('fotoLojista').style.display = 'none';
+            mainContainer.innerHTML = "";
+            return;
+        }
+
+        const nome = (modo === 'gourmet' ? lojistaInfoCache.nomeLojaComida : lojistaInfoCache.nomeLojaGeral) || lojistaInfoCache.nomeLoja || "Loja";
+        const foto = (modo === 'gourmet' ? lojistaInfoCache.fotoPerfilComida : lojistaInfoCache.fotoPerfilGeral) || lojistaInfoCache.fotoPerfil;
+        
+        document.getElementById('nomeLojista').innerText = nome;
+        document.getElementById('fotoLojista').src = otimizarURL(foto, 150);
+        
+        if(modo === 'gourmet' && lojistaInfoCache.montarAtivo) {
+            document.getElementById('barMontar').style.display = 'flex';
+            document.getElementById('txtBarMontar').innerText = lojistaInfoCache.montarTitulo || 'MONTAR MEU PEDIDO';
         }
 
         const snap = await getDocs(collection(db, "produtos"));
@@ -47,14 +58,16 @@ async function carregarDadosEProdutos() {
 
         snap.forEach(d => {
             const p = d.data();
+            
+            // FILTRAGEM TOTAL: Lojista + Status do Produto
             if (p.owner !== lojistaId) return;
-            // Filtro rigoroso de categoria
+            if (p.status === "pausado" || p.visivel === false) return; // Garante que produtos inativos não apareçam
+            
             if (modo === 'gourmet' && p.categoria !== 'Comida') return;
             if (modo !== 'gourmet' && p.categoria === 'Comida') return;
 
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
-            const imgCapa = otimizarURL(fotos[0], 600);
-            const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
+            const imgCapa = otimizarURL(fotos[0], 1000);
 
             if (d.id === activeProductId) {
                 if (modo === 'gourmet') {
@@ -68,16 +81,21 @@ async function carregarDadosEProdutos() {
                         </div><hr style="border:0; border-top:8px solid #f8f8f8;">`;
                 } else {
                     htmlDestaque = `
-                        <div style="padding:15px;">
-                            <img src="${imgCapa}" style="width:100%; border-radius:12px;">
-                            <h2 style="margin:15px 0 5px;">${p.nome}</h2>
-                            <div style="color:var(--orange); font-size:22px; font-weight:800; margin-bottom:10px;">R$ ${p.preco}</div>
-                            ${p.tipoProduto === 'roupa' ? `
-                                <div class="tamanho-container">
-                                    <div class="tamanho-grid">${['P','M','G','GG'].map(t => `<div class="btn-tamanho" onclick="selecionarTamanho(this, '${t}')">${t}</div>`).join('')}</div>
-                                </div>` : ''}
-                            <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}')" class="btn-action-main" style="background:var(--orange);">COMPRAR AGORA</button>
-                        </div><hr style="border:0; border-top:8px solid #eee;">`;
+                        <div class="destaque-produto-modo-prod">
+                            <div class="container-img-padrao">
+                                <img src="${imgCapa}" class="img-padrao-display">
+                            </div>
+                            <div class="info-area-prod">
+                                <h2>${p.nome}</h2>
+                                <div class="preco-destaque">R$ ${p.preco}</div>
+                                ${p.tipoProduto === 'roupa' ? `
+                                    <div class="tamanho-container">
+                                        <div style="font-size:13px; color:#666; margin-bottom:5px;">Tamanho</div>
+                                        <div class="tamanho-grid">${['P','M','G','GG'].map(t => `<div class="btn-tamanho" onclick="selecionarTamanho(this, '${t}')">${t}</div>`).join('')}</div>
+                                    </div>` : ''}
+                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
+                            </div>
+                        </div><hr style="border:0; border-top:8px solid #eee; margin:0;">`;
                 }
             } else {
                 htmlGridLojista += `
@@ -91,7 +109,7 @@ async function carregarDadosEProdutos() {
             }
         });
 
-        mainContainer.innerHTML = htmlDestaque + `<div style="padding:15px 15px 5px; font-weight:800; color:#555; font-size:13px;">MAIS PRODUTOS:</div><div class="grid-produtos">${htmlGridLojista}</div>`;
+        mainContainer.innerHTML = htmlDestaque + (htmlGridLojista ? `<div style="padding:15px 15px 5px; font-weight:800; color:#555; font-size:13px;">MAIS PRODUTOS:</div><div class="grid-produtos">${htmlGridLojista}</div>` : "");
     } catch (e) { console.error(e); }
 }
 
@@ -131,12 +149,12 @@ function renderizarModalConfig() {
         const varSel = document.querySelector('input[name="variacao"]:checked');
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
-            total += parseFloat(v.preco.replace(',','.'));
+            total += parseFloat(v.preco.toString().replace(',','.'));
             nomeFinal += ` (${v.nome})`;
         }
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
-            total += parseFloat(a.preco.replace(',','.'));
+            total += parseFloat(a.preco.toString().replace(',','.'));
             nomeFinal += ` + ${a.nome}`;
         });
         const obs = document.getElementById('gourmet-obs').value;

@@ -1,4 +1,4 @@
-import { db } from './config.js';
+import { db, GetRegrasLojista } from './config.js';
 import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let itemAtualConfig = null;
@@ -9,7 +9,6 @@ function otimizarURL(url, width = 400) {
     if (!url || typeof url !== 'string') return url;
     if (!url.includes('cloudinary.com')) return url;
 
-    // Normaliza URLs do Cloudinary removendo qualquer transformação existente
     return url.replace(
         /\/upload\/(.*?)(\/v\d+\/)/,
         `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`
@@ -26,23 +25,26 @@ export async function carregarVitrineCompleta() {
     if (!mainContainer) return;
 
     try {
-        const snap = await getDocs(collection(db, "produtos"));
         let lojistaInfo = { nomeLoja: "Loja", fotoPerfil: "" };
-        let htmlDestaque = "";
-        let htmlGridLojista = "";
-        let categoriaAtiva = "";
+        let regrasLojista = { podeExibirProdutos: true }; // Default permitindo até checar config
 
-        const docPrincipal = await getDoc(doc(db, "produtos", activeProductId));
-        if (docPrincipal.exists()) {
-            categoriaAtiva = docPrincipal.data().categoria;
-        }
-
+        // 1. CARREGAR E VALIDAR LOJISTA PRIMEIRO
         if (sellerId) {
             const s = await getDoc(doc(db, "usuarios", sellerId));
             if (s.exists()) {
                 lojistaInfo = s.data();
                 lojistaInfoCache = lojistaInfo;
                 lojistaInfoCache.id = sellerId;
+                
+                // Aplica regras do config.js
+                regrasLojista = GetRegrasLojista(lojistaInfo);
+
+                // Se não pode exibir, encerramos aqui silenciosamente
+                if (!regrasLojista.podeExibirProdutos || regrasLojista.isBloqueado) {
+                    mainContainer.innerHTML = "";
+                    return;
+                }
+
                 const header = document.getElementById('main-header');
                 if (header) {
                     header.innerHTML = `
@@ -67,16 +69,32 @@ export async function carregarVitrineCompleta() {
                         if(txtBtn) txtBtn.innerText = lojistaInfo.montarTitulo || 'MONTAR MEU PEDIDO';
                     }
                 }
+            } else {
+                return; // Lojista não existe
             }
+        }
+
+        // 2. BUSCAR PRODUTOS
+        const snap = await getDocs(collection(db, "produtos"));
+        let htmlDestaque = "";
+        let htmlGridLojista = "";
+        let categoriaAtiva = "";
+
+        const docPrincipal = await getDoc(doc(db, "produtos", activeProductId));
+        if (docPrincipal.exists()) {
+            categoriaAtiva = docPrincipal.data().categoria;
         }
 
         snap.forEach(d => {
             const p = d.data();
+            
+            // FILTRAGEM DO PRODUTO (Status e Visibilidade)
+            if (p.status === "desativado" || p.visivel === false) return;
+
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
             const imgCapa = otimizarURL(fotos[0] || "https://via.placeholder.com/300", 600);
             const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
             
-            // Lógica para adicionar ao carrinho com validação de tamanho para roupas
             const funcAddDiretoGeral = `
                 (() => {
                     const id = '${d.id}';
@@ -127,7 +145,6 @@ export async function carregarVitrineCompleta() {
                         </div>
                         <div class="gourmet-section-title">Veja também</div>`;
                 } else {
-                    // SEÇÃO ROUPA NA VITRINE GERAL
                     let htmlRoupa = "";
                     if(p.tipoProduto === 'roupa') {
                         let opcoes = [];

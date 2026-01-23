@@ -1,4 +1,4 @@
-import { db } from './config.js';
+import { db, GetRegrasLojista } from './config.js';
 import { collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 let todosProdutos = [];
@@ -50,7 +50,6 @@ function normalizar(texto) {
     return texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 }
 
-// ALGORITMO DE JUSTIÇA - MANTIDO INTEGRALMENTE
 function aplicarAlgoritmoVisibilidade(lista) {
     const pesos = { 'vip': 5, 'premium': 3, 'basico': 1 };
     const grupos = {
@@ -78,20 +77,29 @@ async function inicializar() {
         const snapProdutos = await getDocs(collection(db, "produtos"));
         const snapUsuarios = await getDocs(collection(db, "usuarios"));
         
-        const planosLojistas = {};
+        const dadosLojistas = {};
         snapUsuarios.forEach(u => {
-            const data = u.data();
-            planosLojistas[u.id] = data.planoAtivo || 'basico';
+            dadosLojistas[u.id] = u.data();
         });
 
         todosProdutos = [];
         snapProdutos.forEach(d => {
             const data = d.data();
             if(data.promocao === 'sim' && data.promoExpira && Date.now() > data.promoExpira) data.promocao = 'nao';
-            todosProdutos.push({ id: d.id, ...data, planoLojista: planosLojistas[data.owner] || 'basico' });
+            
+            // Injeta dados de permissão baseados no config.js
+            const lojista = dadosLojistas[data.owner];
+            const regras = GetRegrasLojista(lojista);
+
+            todosProdutos.push({ 
+                id: d.id, 
+                ...data, 
+                planoLojista: lojista?.planoAtivo || 'basico',
+                isLojistaAprovado: regras.podeExibirProdutos,
+                isProdutoAtivo: data.status !== 'inativo' && data.visivel !== false
+            });
         });
 
-        // Flag de retorno baseada em cache
         const domCache = sessionStorage.getItem('pedeai_dom_cache');
         isReturning = (domCache !== null);
 
@@ -110,14 +118,12 @@ async function inicializar() {
         renderizarCarrosselAutomatico();
         renderizarFiltros();
 
-        // Só renderiza se não houver cache ou se houver mudança de filtro
         if (!isReturning) {
             renderizarProdutos();
         } else {
-            // Se estiver voltando, o DOM já foi injetado pelo HTML, apenas restaura o scroll final por segurança
             const scrollPos = sessionStorage.getItem('pedeai_scroll');
             if (scrollPos) window.scrollTo(0, parseInt(scrollPos));
-            isReturning = false; // Reseta flag
+            isReturning = false; 
         }
 
     } catch (e) { console.error("Erro:", e); }
@@ -127,7 +133,15 @@ function renderizarCarrosselAutomatico() {
     const track = document.getElementById('carouselTrack');
     if (!track) return;
     const categoriaFirebase = modoAtual === 'restaurants' ? 'Comida' : (modoAtual === 'classifieds' ? 'Classificados' : 'Geral');
-    const poolTurbo = todosProdutos.filter(p => p.turbo === 'sim' && p.categoria === categoriaFirebase);
+    
+    // Aplica as mesmas regras de visibilidade no carrossel Turbo
+    const poolTurbo = todosProdutos.filter(p => 
+        p.turbo === 'sim' && 
+        p.categoria === categoriaFirebase &&
+        p.isLojistaAprovado && 
+        p.isProdutoAtivo
+    );
+    
     const data = aplicarAlgoritmoVisibilidade(poolTurbo).slice(0, 20);
     
     if (data.length === 0) {
@@ -181,6 +195,10 @@ function renderizarProdutos() {
     if (!grid) return;
     
     let filtrados = todosProdutos.filter(p => {
+        // REGRAS DE BLOQUEIO DO CONFIG.JS (FILTRAGEM CIRÚRGICA)
+        if (!p.isLojistaAprovado) return false;
+        if (!p.isProdutoAtivo) return false;
+
         if (modoAtual === 'restaurants' && p.categoria !== 'Comida') return false;
         if (modoAtual === 'products' && p.categoria !== 'Geral') return false;
         if (modoAtual === 'classifieds' && p.categoria !== 'Classificados') return false;
@@ -194,7 +212,6 @@ function renderizarProdutos() {
         return true;
     });
 
-    // Algoritmo só roda se não for restauração de estado
     filtrados = aplicarAlgoritmoVisibilidade(filtrados);
 
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
@@ -219,7 +236,6 @@ function renderizarProdutos() {
 }
 
 window.navegarParaProduto = (owner, id, modo) => {
-    // Cacheia o DOM atual e a posição antes de sair
     const grid = document.getElementById('grid-produtos');
     if (grid) sessionStorage.setItem('pedeai_dom_cache', grid.innerHTML);
     sessionStorage.setItem('pedeai_scroll', window.scrollY);
@@ -230,7 +246,7 @@ window.filtrarPorPalavra = (termo, elemento) => {
     filtroChip = normalizar(termo);
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     elemento.classList.add('active');
-    sessionStorage.removeItem('pedeai_dom_cache'); // Filtro novo exige nova renderização
+    sessionStorage.removeItem('pedeai_dom_cache'); 
     renderizarProdutos();
 };
 
