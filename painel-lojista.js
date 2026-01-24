@@ -87,8 +87,10 @@ async function verificarStatus() {
             userData = docSnap.data();
             userData.id = userId;
             
-// VERIFICAÇÃO DE BLOQUEIO POR PAGAMENTO
+// Local: painel-lojista.js -> função verificarStatus()
 const statusSujo = String(userData.status || "").trim().toLowerCase();
+
+// SÓ bloqueia se o valor for EXPLICITAMENTE um destes dois
 if (statusSujo === 'bloqueado' || statusSujo === 'inadimplente') {
     document.body.innerHTML = `
         <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif; padding: 20px; background: #f8f9fa;">
@@ -103,8 +105,9 @@ if (statusSujo === 'bloqueado' || statusSujo === 'inadimplente') {
             </a>
         </div>
     `;
-    return;
+    return; 
 }
+// Se o status for "ativo", "null" ou vazio, o código continuará para aqui embaixo normalmente.       
             
             const regras = GetRegrasLojista(userData);
             const estaAutorizado = userData.status === 'ativo' || userData.status === 'aprovado';
