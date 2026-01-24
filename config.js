@@ -19,7 +19,7 @@ export const db = getFirestore(app);
  */
 export const CONFIG_SISTEMA = {
     pix: "SUA-CHAVE-PIX-AQUI", 
-    whatsappSuporte: localStorage.getItem('zapSuporteGeral') || "5511999999999", // Número padrão caso não definido
+    whatsappSuporte: localStorage.getItem('zapSuporteGeral') || "5511999999999",
     mensagens: {
         bloqueio: "Sua conta está temporariamente bloqueada. Entre em contato com o administrador para regularizar."
     },
@@ -59,11 +59,15 @@ export const CONFIG_SISTEMA = {
  */
 export const GetRegrasLojista = (dadosLojista) => {
     const planoChave = dadosLojista?.planoAtivo || "basico";
-    const status = String(dadosLojista?.status || "ativo").trim().toLowerCase();
+    
+    // Normalização rigorosa do status para compatibilidade Produção/NoSQL
+    const statusRaw = dadosLojista?.status;
+    const status = (statusRaw !== null && statusRaw !== undefined) 
+        ? String(statusRaw).trim().toLowerCase() 
+        : "ativo";
     
     const configuracaoPlano = CONFIG_SISTEMA.planos[planoChave] || CONFIG_SISTEMA.planos.basico;
 
-    // Cálculo de vencimento (Exemplo: 30 dias após dataCadastro)
     const dataCriacao = dadosLojista?.dataCadastro ? new Date(dadosLojista.dataCadastro) : new Date();
     const hoje = new Date();
     const diffTime = Math.abs(hoje - dataCriacao);
@@ -73,7 +77,7 @@ export const GetRegrasLojista = (dadosLojista) => {
     return {
         isAprovado: status === "ativo",
         isBloqueado: status === "bloqueado",
-        podeExibirProdutos: status === "ativo", // Somente ativos mostram produtos na vitrine
+        podeExibirProdutos: status === "ativo",
         planoNome: configuracaoPlano.nome,
         valorMensal: configuracaoPlano.preco,
         diasParaVencer: diasRestantes,

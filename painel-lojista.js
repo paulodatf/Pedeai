@@ -87,24 +87,23 @@ async function verificarStatus() {
             userData = docSnap.data();
             userData.id = userId;
             
-const statusAtual = String(userData.status || "ativo").trim().toLowerCase();
-
-if (statusAtual === 'bloqueado' || statusAtual === 'inadimplente') {
-    document.body.innerHTML = `
-        <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif; padding: 20px; background: #f8f9fa;">
-            <i class="fa-solid fa-hand-holding-dollar" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
-            <h2 style="color: #333;">Acesso Suspenso</h2>
-            <p style="color: #666; max-width: 400px; line-height: 1.5;">
-                Seu acesso foi temporariamente suspenso por falta de pagamento.<br>
-                <b>Regularize para voltar a usar o painel e reativar sua vitrine.</b>
-            </p>
-            <a href="https://wa.me/5511999999999" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                FALAR COM O SUPORTE
-            </a>
-        </div>
-    `;
-    return;
-}
+            // VERIFICAÇÃO DE BLOQUEIO POR PAGAMENTO
+            if (userData.status === 'bloqueado' || userData.status === 'inadimplente' || userData.bloqueado === true || userData.bloqueado === "true") {
+                document.body.innerHTML = `
+                    <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif; padding: 20px; background: #f8f9fa;">
+                        <i class="fa-solid fa-hand-holding-dollar" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
+                        <h2 style="color: #333;">Acesso Suspenso</h2>
+                        <p style="color: #666; max-width: 400px; line-height: 1.5;">
+                            Seu acesso foi temporariamente suspenso por falta de pagamento.<br>
+                            <b>Regularize para voltar a usar o painel e reativar sua vitrine.</b>
+                        </p>
+                        <a href="https://wa.me/SEU_NUMERO_AQUI" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                            Falar com Suporte
+                        </a>
+                    </div>
+                `;
+                return; // Interrompe qualquer outra lógica do painel
+            }
             
             const regras = GetRegrasLojista(userData);
             const estaAutorizado = userData.status === 'ativo' || userData.status === 'aprovado';
