@@ -97,7 +97,7 @@ async function verificarStatus() {
                             Seu acesso foi temporariamente suspenso por falta de pagamento.<br>
                             <b>Regularize para voltar a usar o painel e reativar sua vitrine.</b>
                         </p>
-                        <a href="https://wa.me/SEU_NUMERO_AQUI" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+                        <a href="https://wa.me/556692387529" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
                             Falar com Suporte
                         </a>
                     </div>
