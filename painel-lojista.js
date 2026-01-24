@@ -105,8 +105,14 @@ async function verificarStatus() {
                 return; // Interrompe qualquer outra lógica do painel
             }
             
-            const regras = GetRegrasLojista(userData);
-            const estaAutorizado = userData.status === 'ativo' || userData.status === 'aprovado';
+const statusVindoDoBanco = userData.status;
+const statusBloqueados = ['bloqueado', 'inadimplente'];
+
+// Só bloqueia se o status estiver explicitamente na lista de bloqueio
+const isRealmenteBloqueado = statusBloqueados.includes(statusVindoDoBanco);
+
+// Considera autorizado se NÃO estiver bloqueado (flexibilidade para produção)
+const estaAutorizado = statusVindoDoBanco === 'ativo' || statusVindoDoBanco === 'aprovado' || !isRealmenteBloqueado;
             
             document.getElementById('labelPlano').innerText = "Plano: " + (userData.planoAtivo || "Básico").toUpperCase();
             document.getElementById('labelPlano').style.color = regras.corPlano;
