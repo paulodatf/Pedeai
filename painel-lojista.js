@@ -87,28 +87,25 @@ async function verificarStatus() {
             userData = docSnap.data();
             userData.id = userId;
             
-// Local: painel-lojista.js -> função verificarStatus()
-const statusSujo = String(userData.status || "").trim().toLowerCase();
+// CORREÇÃO DE CONVERSÃO E COMPARAÇÃO
+const statusDB = userData.status ? String(userData.status).trim().toLowerCase() : "ativo";
 
-// SÓ bloqueia se o valor for EXPLICITAMENTE um destes dois
-if (statusSujo === 'bloqueado' || statusSujo === 'inadimplente') {
+if (statusDB === 'bloqueado' || statusDB === 'inadimplente') {
     document.body.innerHTML = `
         <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif; padding: 20px; background: #f8f9fa;">
             <i class="fa-solid fa-hand-holding-dollar" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
             <h2 style="color: #333;">Acesso Suspenso</h2>
             <p style="color: #666; max-width: 400px; line-height: 1.5;">
-                Seu acesso foi temporariamente suspenso por falta de pagamento.<br>
-                <b>Regularize para voltar a usar o painel e reativar sua vitrine.</b>
+                Seu acesso foi temporariamente suspenso.<br>
+                <b>Fale com o suporte para regularizar.</b>
             </p>
             <a href="https://wa.me/5511999999999" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                Falar com Suporte
+                FALAR COM O SUPORTE
             </a>
         </div>
     `;
-    return; 
+    return;
 }
-// Se o status for "ativo", "null" ou vazio, o código continuará para aqui embaixo normalmente.       
-            
             const regras = GetRegrasLojista(userData);
             const estaAutorizado = userData.status === 'ativo' || userData.status === 'aprovado';
             

@@ -236,18 +236,6 @@
         alert("Erro ao realizar ação.");
     }
 };
-// Localize o fim da função window.actionUser no seu arquivo e cole logo abaixo:
-
-  window.actionUser = async (id, novoStatus) => { 
-    try {
-        await updateDoc(doc(db, "usuarios", id), { 
-            status: novoStatus 
-        });
-    } catch (e) {
-        console.error("Erro ao atualizar status:", e);
-        alert("Erro ao realizar ação.");
-    }
-};
 
 // --- COLE O NOVO CÓDIGO AQUI ---
 
