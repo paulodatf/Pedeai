@@ -268,16 +268,17 @@
                 document.body.className = 'mode-' + savedMode;
             }
             
-            // Restauração imediata do DOM se disponível para evitar "pulo"
-            const domCache = sessionStorage.getItem('pedeai_dom_cache');
-            if (domCache && window.performance.navigation.type === 2) { // Type 2 é "Back/Forward"
-                document.addEventListener('DOMContentLoaded', () => {
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted || window.performance.navigation.type === 2) {
+                    const domCache = sessionStorage.getItem('pedeai_dom_cache');
                     const grid = document.getElementById('grid-produtos');
-                    if (grid) grid.innerHTML = domCache;
-                    const scrollPos = sessionStorage.getItem('pedeai_scroll');
-                    if (scrollPos) window.scrollTo(0, parseInt(scrollPos));
-                });
-            }
+                    if (domCache && grid) {
+                        grid.innerHTML = domCache;
+                        const scrollPos = sessionStorage.getItem('pedeai_scroll');
+                        if (scrollPos) window.scrollTo(0, parseInt(scrollPos));
+                    }
+                }
+            });
         })();
     </script>
 </body>

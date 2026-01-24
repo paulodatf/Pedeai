@@ -121,6 +121,8 @@ async function inicializar() {
         if (!isReturning) {
             renderizarProdutos();
         } else {
+            const grid = document.getElementById('grid-produtos');
+            if (grid) grid.innerHTML = domCache;
             const scrollPos = sessionStorage.getItem('pedeai_scroll');
             if (scrollPos) window.scrollTo(0, parseInt(scrollPos));
             isReturning = false; 
