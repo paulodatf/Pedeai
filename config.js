@@ -19,6 +19,7 @@ export const db = getFirestore(app);
  */
 export const CONFIG_SISTEMA = {
     pix: "SUA-CHAVE-PIX-AQUI", 
+    whatsappSuporte: localStorage.getItem('zapSuporteGeral') || "5511999999999", // Número padrão caso não definido
     mensagens: {
         bloqueio: "Sua conta está temporariamente bloqueada. Entre em contato com o administrador para regularizar."
     },

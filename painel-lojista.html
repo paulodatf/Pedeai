@@ -359,6 +359,23 @@
             `;
             container.appendChild(div);
         }
+    
     </script>
+    <div id="modalLimite" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div style="background:white; padding:30px; border-radius:15px; max-width:400px; width:100%; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <button onclick="fecharModalLimite()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:24px; cursor:pointer; color:#999;">&times;</button>
+        <i class="fa-solid fa-arrow-up-right-dots" style="font-size:50px; color:#ee4d2d; margin-bottom:15px;"></i>
+        <h3 style="margin:0 0 10px; color:#333;">Limite Atingido</h3>
+        <p style="font-size:14px; color:#666; line-height:1.5; margin-bottom:20px;">Você atingiu o limite do seu plano. Para continuar, atualize seu plano ou fale com o suporte.</p>
+        <a href="https://wa.me/SEU_NUMERO_AQUI" target="_blank" style="display:block; background:#28a745; color:white; text-decoration:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px;">
+            <i class="fa-brands fa-whatsapp"></i> Falar com o Suporte
+        </a>
+    </div>
+</div>
+
+<script>
+    window.abrirModalLimite = () => document.getElementById('modalLimite').style.display = 'flex';
+    window.fecharModalLimite = () => document.getElementById('modalLimite').style.display = 'none';
+</script>
 </body>
 </html>
