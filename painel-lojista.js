@@ -87,17 +87,16 @@ async function verificarStatus() {
             userData = docSnap.data();
             userData.id = userId;
             
-// CORREÇÃO DE CONVERSÃO E COMPARAÇÃO
-const statusDB = userData.status ? String(userData.status).trim().toLowerCase() : "ativo";
+const statusAtual = String(userData.status || "ativo").trim().toLowerCase();
 
-if (statusDB === 'bloqueado' || statusDB === 'inadimplente') {
+if (statusAtual === 'bloqueado' || statusAtual === 'inadimplente') {
     document.body.innerHTML = `
         <div style="height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: sans-serif; padding: 20px; background: #f8f9fa;">
             <i class="fa-solid fa-hand-holding-dollar" style="font-size: 50px; color: #dc3545; margin-bottom: 20px;"></i>
             <h2 style="color: #333;">Acesso Suspenso</h2>
             <p style="color: #666; max-width: 400px; line-height: 1.5;">
-                Seu acesso foi temporariamente suspenso.<br>
-                <b>Fale com o suporte para regularizar.</b>
+                Seu acesso foi temporariamente suspenso por falta de pagamento.<br>
+                <b>Regularize para voltar a usar o painel e reativar sua vitrine.</b>
             </p>
             <a href="https://wa.me/5511999999999" style="margin-top: 20px; padding: 12px 25px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
                 FALAR COM O SUPORTE
@@ -106,6 +105,7 @@ if (statusDB === 'bloqueado' || statusDB === 'inadimplente') {
     `;
     return;
 }
+            
             const regras = GetRegrasLojista(userData);
             const estaAutorizado = userData.status === 'ativo' || userData.status === 'aprovado';
             

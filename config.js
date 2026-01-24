@@ -59,7 +59,7 @@ export const CONFIG_SISTEMA = {
  */
 export const GetRegrasLojista = (dadosLojista) => {
     const planoChave = dadosLojista?.planoAtivo || "basico";
-    const status = dadosLojista?.status || "pendente"; // ativo, pendente, bloqueado
+    const status = String(dadosLojista?.status || "ativo").trim().toLowerCase();
     
     const configuracaoPlano = CONFIG_SISTEMA.planos[planoChave] || CONFIG_SISTEMA.planos.basico;
 
