@@ -195,14 +195,18 @@
         document.getElementById('stat-bloqueados').innerText = cB;
     });
 
-    window.actionUser = async (id, novoStatus) => { 
-        try {
-            await updateDoc(doc(db, "usuarios", id), { status: novoStatus });
-        } catch (e) {
-            console.error("Erro ao atualizar status:", e);
-            alert("Erro ao realizar ação.");
-        }
-    };
+ // Altere apenas esta função no admin.html
+  window.actionUser = async (id, novoStatus) => { 
+    try {
+        // Garantimos que ao ativar, limpamos qualquer marcação de inadimplência
+        await updateDoc(doc(db, "usuarios", id), { 
+            status: novoStatus 
+        });
+    } catch (e) {
+        console.error("Erro ao atualizar status:", e);
+        alert("Erro ao realizar ação.");
+    }
+};
 </script>
 </body>
 </html>

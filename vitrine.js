@@ -26,9 +26,8 @@ export async function carregarVitrineCompleta() {
 
     try {
         let lojistaInfo = { nomeLoja: "Loja", fotoPerfil: "" };
-        let regrasLojista = { podeExibirProdutos: true }; // Default permitindo até checar config
+        let regrasLojista = { podeExibirProdutos: true };
 
-        // 1. CARREGAR E VALIDAR LOJISTA PRIMEIRO
         if (sellerId) {
             const s = await getDoc(doc(db, "usuarios", sellerId));
             if (s.exists()) {
@@ -36,10 +35,8 @@ export async function carregarVitrineCompleta() {
                 lojistaInfoCache = lojistaInfo;
                 lojistaInfoCache.id = sellerId;
                 
-                // Aplica regras do config.js
                 regrasLojista = GetRegrasLojista(lojistaInfo);
 
-                // Se não pode exibir, encerramos aqui silenciosamente
                 if (!regrasLojista.podeExibirProdutos || regrasLojista.isBloqueado) {
                     mainContainer.innerHTML = "";
                     return;
@@ -70,11 +67,10 @@ export async function carregarVitrineCompleta() {
                     }
                 }
             } else {
-                return; // Lojista não existe
+                return;
             }
         }
 
-        // 2. BUSCAR PRODUTOS
         const snap = await getDocs(collection(db, "produtos"));
         let htmlDestaque = "";
         let htmlGridLojista = "";
@@ -88,7 +84,6 @@ export async function carregarVitrineCompleta() {
         snap.forEach(d => {
             const p = d.data();
             
-            // FILTRAGEM DO PRODUTO (Status e Visibilidade)
             if (p.status === "desativado" || p.visivel === false) return;
 
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
@@ -136,7 +131,9 @@ export async function carregarVitrineCompleta() {
                                 <h1 class="gourmet-title">${p.nome}</h1>
                                 <span class="gourmet-price">R$ ${p.preco}</span>
                             </div>
-                            <p class="gourmet-description">${p.descricao || 'Produto selecionado do nosso cardápio.'}</p>
+                            <div class="desc-gourmet-box">
+                                <p class="gourmet-description">${p.descricao || 'Produto selecionado do nosso cardápio.'}</p>
+                            </div>
                             <div class="gourmet-only" style="display: block;">
                                 <label class="obs-label">Alguma observação?</label>
                                 <textarea id="gourmet-obs" class="obs-box" placeholder="Ex: Sem cebola, bem passado..."></textarea>
@@ -176,6 +173,12 @@ export async function carregarVitrineCompleta() {
                             <div class="product-info-box" style="padding: 20px;">
                                 <div class="p-price-main" style="color: #ee4d2d; font-size: 28px; font-weight: bold;">R$ ${p.preco}</div>
                                 <div class="p-name-main" style="font-size: 18px; margin-top: 8px; color: #333; font-weight: 500;">${p.nome}</div>
+                                
+                                <div class="desc-produto-box">
+                                    <span class="desc-produto-label">Descrição:</span>
+                                    <p class="desc-produto-text">${p.descricao || 'Nenhuma descrição informada.'}</p>
+                                </div>
+
                                 ${htmlRoupa}
                                 <button onclick="${funcAddDiretoGeral}" class="btn-whatsapp" style="width: 100%; background: #25d366; color: white; padding: 16px; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
                                     <i class="fas fa-cart-plus"></i> ADICIONAR AO CARRINHO
@@ -236,7 +239,8 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
             adicionais: lojistaInfoCache.montarAdicionais || [],
             isMontarGlobal: true,
             owner: lojistaInfoCache.id,
-            whatsapp: lojistaInfoCache.whatsapp
+            whatsapp: lojistaInfoCache.whatsapp,
+            descricao: ""
         };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
@@ -280,6 +284,14 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
 
     content.innerHTML = html;
     document.getElementById('modalNome').innerText = configData.nome;
+    
+    const campoDescModal = document.getElementById('texto-descricao-modal');
+    const containerDescModal = document.getElementById('container-desc-modal');
+    if(campoDescModal) {
+        campoDescModal.innerText = itemAtualConfig.descricao || "Ingredientes tradicionais da casa.";
+        if(containerDescModal) containerDescModal.style.display = itemAtualConfig.descricao ? 'block' : 'none';
+    }
+    
     window.atualizarPrecoModal();
 };
 
@@ -300,7 +312,7 @@ window.atualizarPrecoModal = () => {
         const obs = document.getElementById('gourmet-obs') ? document.getElementById('gourmet-obs').value : "";
         if(obs) nomeFinal += ` [Obs: ${obs}]`;
         const img = otimizarURL(itemAtualConfig.foto || (itemAtualConfig.fotos && itemAtualConfig.fotos[0]) || "", 300);
-        window.adicionarAoCarrinho(itemAtualConfig.id || 'montar_global', nomeFinal, total.toFixed(2).replace('.', ','), itemAtualConfig.owner, itemAtualConfig.whatsapp, img);
+        window.adicionarAoCarrinho(itemAtualConfig.id || 'montar_global', nomeFinal, total.toFixed(2).replace('.', ','), itemAtualConfig.owner, itemAtualConfig.whatsapp, img, itemAtualConfig.descricao || "");
         document.getElementById('modalComida').classList.remove('active');
         document.getElementById('overlayComida').style.display = 'none';
     };

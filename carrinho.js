@@ -1,11 +1,21 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// --- FUNÇÕES DE LÓGICA ---
-window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem) => {
+// SUBSTITUA A FUNÇÃO EXISTENTE POR ESTA:
+window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    const item = { id, nome, preco, owner, whatsapp, imagem, qtd: 1 };
-    const index = carrinho.findIndex(i => i.id === id);
-    if (index > -1) { carrinho[index].qtd += 1; } else { carrinho.push(item); }
+    
+    // Agora o item carrega a descrição para o lojista identificar melhor
+    const item = { id, nome, preco, owner, whatsapp, imagem, descricao, qtd: 1 };
+    
+    // Mantemos a lógica de busca por ID e Nome (para separar variações)
+    const index = carrinho.findIndex(i => i.id === id && i.nome === nome);
+    
+    if (index > -1) { 
+        carrinho[index].qtd += 1; 
+    } else { 
+        carrinho.push(item); 
+    }
+    
     localStorage.setItem(STORAGE_KEY, JSON.stringify(carrinho));
     window.atualizarIconeCarrinho();
     const btn = document.getElementById('carrinho-flutuante');
@@ -36,14 +46,31 @@ window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
-    let texto = `*Novo Pedido - Pede Aí*\n\n`;
+
+    let texto = `*✅ NOVO PEDIDO - PEDE AÍ*\n`;
+    texto += `------------------------------------------\n\n`;
+    
     let total = 0;
-    itensLoja.forEach(item => {
+    itensLoja.forEach((item, index) => {
         const precoLimpo = parseFloat(item.preco.replace('R$', '').replace('.', '').replace(',', '.'));
-        texto += `• ${item.qtd}x ${item.nome} - R$ ${item.preco}\n`;
-        total += (precoLimpo * item.qtd);
+        const subtotal = precoLimpo * item.qtd;
+        total += subtotal;
+
+        texto += `*${item.qtd}x ${item.nome.toUpperCase()}*\n`;
+        if (item.descricao && item.descricao.trim() !== "") {
+            texto += `_Detalhes: ${item.descricao}_\n`;
+        }
+        texto += `Valor Unitário: R$ ${item.preco}\n`;
+        if (item.imagem && item.imagem.trim() !== "") {
+            texto += `Foto: ${item.imagem}\n`;
+        }
+        texto += `\n`;
     });
-    texto += `\n*Total desta loja: R$ ${total.toFixed(2).replace('.', ',')}*`;
+
+    texto += `------------------------------------------\n`;
+    texto += `*TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
+    texto += `------------------------------------------`;
+
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novoCarrinho));
     window.atualizarIconeCarrinho();

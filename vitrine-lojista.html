@@ -25,8 +25,17 @@
         body.gourmet-mode .gourmet-info-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         body.gourmet-mode .gourmet-title { font-size: 20px; font-weight: 800; color: var(--gourmet-dark); line-height: 1.2; margin: 0; }
         body.gourmet-mode .gourmet-price { font-size: 18px; font-weight: 700; color: var(--ifood-red); white-space: nowrap; }
-        body.gourmet-mode .gourmet-description { font-size: 14px; color: #666; line-height: 1.4; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f0f0f0; }
         
+        /* AJUSTE DESIGN GOURMET */
+        .desc-gourmet-box { background: #fffcf5; border: 1px solid #f9ebd1; padding: 15px; border-radius: 12px; margin: 15px 0; position: relative; }
+        .desc-gourmet-box::before { content: "\f2e7"; font-family: "Font Awesome 5 Free"; font-weight: 900; position: absolute; top: -10px; left: 15px; background: #fffcf5; padding: 0 5px; color: #d4a373; font-size: 14px; }
+        .gourmet-description { font-size: 14px; color: #4a4a4a; font-style: italic; line-height: 1.6; margin: 0; border-bottom: none !important; padding-bottom: 0 !important; }
+        
+        /* AJUSTE DESIGN PRODUTO */
+        .desc-produto-box { border-left: 3px solid var(--orange); padding: 10px 15px; background: #fff; margin: 15px 0; }
+        .desc-produto-label { font-size: 11px; color: #999; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 4px; }
+        .desc-produto-text { margin: 0; font-size: 14px; color: #444; line-height: 1.5; }
+
         body.gourmet-mode .obs-label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; display: block; }
         body.gourmet-mode .obs-box { width: 100%; border: 1px solid #e2e2e2; border-radius: 8px; padding: 10px; min-height: 60px; font-family: inherit; background: #f9f9f9; resize: none; outline: none; font-size: 13px; }
 
@@ -78,8 +87,16 @@
             <button onclick="fecharModalComida()" style="background:none; border:none; font-size:24px;">&times;</button>
         </div>
         <div id="modalContent"></div>
-        <div style="padding: 15px;">
-            <button id="btnConfirmarConfig" class="btn-gourmet-action" style="margin-top:0;">ADICIONAR R$ 0,00</button>
+
+        <div id="container-desc-modal" style="padding: 15px; background: #fffcf5; margin: 10px 15px; border-radius: 12px; border: 1px dashed #d4a373;">
+            <h4 style="margin: 0 0 8px 0; color: #d4a373; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-info-circle"></i> Detalhes do Item
+            </h4>
+            <p id="texto-descricao-modal" style="margin: 0; font-size: 14px; color: #555; font-style: italic; line-height: 1.5;"></p>
+        </div>
+
+        <div style="padding:15px; border-top: 1px solid #eee;">
+            <button id="btnConfirmarConfig" style="width:100%; padding:16px; border-radius:12px; border:none; color:#fff; font-weight:700; font-size:15px; cursor:pointer; text-transform:uppercase; background:var(--ifood-red);">Confirmar</button>
         </div>
     </div>
 

@@ -31,10 +31,8 @@ async function carregarDadosEProdutos() {
         lojistaInfoCache = userDoc.data();
         lojistaInfoCache.id = lojistaId;
 
-        // VALIDAÇÃO DE BLOQUEIO VIA CONFIG.JS
         const regras = GetRegrasLojista(lojistaInfoCache);
         if (!regras.podeExibirProdutos || regras.isBloqueado) {
-            // Se bloqueado, limpa o header e encerra a execução silenciosamente
             document.getElementById('nomeLojista').innerText = "";
             document.getElementById('fotoLojista').style.display = 'none';
             mainContainer.innerHTML = "";
@@ -59,9 +57,8 @@ async function carregarDadosEProdutos() {
         snap.forEach(d => {
             const p = d.data();
             
-            // FILTRAGEM TOTAL: Lojista + Status do Produto
             if (p.owner !== lojistaId) return;
-            if (p.status === "pausado" || p.visivel === false) return; // Garante que produtos inativos não apareçam
+            if (p.status === "pausado" || p.visivel === false) return; 
             
             if (modo === 'gourmet' && p.categoria !== 'Comida') return;
             if (modo !== 'gourmet' && p.categoria === 'Comida') return;
@@ -72,13 +69,16 @@ async function carregarDadosEProdutos() {
             if (d.id === activeProductId) {
                 if (modo === 'gourmet') {
                     htmlDestaque = `
-                        <div style="padding:15px;">
-                            <img src="${imgCapa}" style="width:100%; border-radius:12px; aspect-ratio:1.2/1; object-fit:cover;">
-                            <h2 style="margin:15px 0 5px; font-size:20px;">${p.nome}</h2>
-                            <div style="color:var(--ifood-red); font-size:22px; font-weight:800; margin-bottom:10px;">R$ ${p.preco}</div>
-                            <p style="color:#666; font-size:14px; line-height:1.4;">${p.descricao || ''}</p>
+                        <div class="container-gourmet-destaque">
+                            <img src="${imgCapa}" class="img-gourmet-destaque">
+                            <h2 class="titulo-gourmet-destaque">${p.nome}</h2>
+                            <div class="preco-gourmet-destaque">R$ ${p.preco}</div>
+                            <div class="card-desc-gourmet">
+                                <i class="fas fa-quote-left"></i>
+                                <p class="texto-desc-gourmet">${p.descricao || 'Sem descrição disponível.'}</p>
+                            </div>
                             <button onclick="window.abrirConfigComida('${d.id}', false)" class="btn-action-main" style="background:var(--ifood-red);">ADICIONAR AO PEDIDO</button>
-                        </div><hr style="border:0; border-top:8px solid #f8f8f8;">`;
+                        </div><hr style="border:0; border-top:8px solid #f8f8f8; margin:0;">`;
                 } else {
                     htmlDestaque = `
                         <div class="destaque-produto-modo-prod">
@@ -88,6 +88,7 @@ async function carregarDadosEProdutos() {
                             <div class="info-area-prod">
                                 <h2>${p.nome}</h2>
                                 <div class="preco-destaque">R$ ${p.preco}</div>
+                                <div class="desc-produto-simples">${p.descricao || 'Nenhuma descrição informada.'}</div>
                                 ${p.tipoProduto === 'roupa' ? `
                                     <div class="tamanho-container">
                                         <div style="font-size:13px; color:#666; margin-bottom:5px;">Tamanho</div>
@@ -115,7 +116,7 @@ async function carregarDadosEProdutos() {
 
 window.abrirConfigComida = async (id, isGlobal = false) => {
     if (isGlobal) {
-        itemAtualConfig = { id: 'montar_global', nome: lojistaInfoCache.montarTitulo || "Personalizado", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfilComida };
+        itemAtualConfig = { id: 'montar_global', nome: lojistaInfoCache.montarTitulo || "Personalizado", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfilComida, descricao: "" };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
         itemAtualConfig = { ...d.data(), id: d.id };
@@ -126,6 +127,16 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
 function renderizarModalConfig() {
     const content = document.getElementById('modalContent');
     document.getElementById('modalNome').innerText = itemAtualConfig.nome;
+    
+    const descModal = document.getElementById('texto-descricao-gourmet');
+    const containerDesc = document.getElementById('container-desc-modal');
+    if (itemAtualConfig.descricao) {
+        descModal.innerText = itemAtualConfig.descricao;
+        containerDesc.style.display = 'block';
+    } else {
+        containerDesc.style.display = 'none';
+    }
+
     let html = '';
     if (itemAtualConfig.variacoes?.length > 0) {
         html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ESCOLHA UMA OPÇÃO:</div>`;
