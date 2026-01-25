@@ -16,7 +16,6 @@ function otimizarURL(url, width = 400) {
     return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
 }
 
-// Função para gerar link do produto destacado
 function gerarLinkDestaque(prodId) {
     const base = window.location.origin + window.location.pathname;
     return `${base}?seller=${lojistaId}&product=${prodId}&modo=${modo}`;
@@ -45,11 +44,11 @@ async function carregarDadosEProdutos() {
             return;
         }
 
-        const nome = (modo === 'gourmet' ? lojistaInfoCache.nomeLojaComida : lojistaInfoCache.nomeLojaGeral) || lojistaInfoCache.nomeLoja || "Loja";
-        const foto = (modo === 'gourmet' ? lojistaInfoCache.fotoPerfilComida : lojistaInfoCache.fotoPerfilGeral) || lojistaInfoCache.fotoPerfil;
+        const nomeLoja = (modo === 'gourmet' ? lojistaInfoCache.nomeLojaComida : lojistaInfoCache.nomeLojaGeral) || lojistaInfoCache.nomeLoja || "Loja";
+        const fotoLoja = (modo === 'gourmet' ? lojistaInfoCache.fotoPerfilComida : lojistaInfoCache.fotoPerfilGeral) || lojistaInfoCache.fotoPerfil;
         
-        document.getElementById('nomeLojista').innerText = nome;
-        document.getElementById('fotoLojista').src = otimizarURL(foto, 150);
+        document.getElementById('nomeLojista').innerText = nomeLoja;
+        document.getElementById('fotoLojista').src = otimizarURL(fotoLoja, 150);
         
         if(modo === 'gourmet' && lojistaInfoCache.montarAtivo) {
             document.getElementById('barMontar').style.display = 'flex';
@@ -70,6 +69,10 @@ async function carregarDadosEProdutos() {
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
             const imgCapa = otimizarURL(fotos[0], 1000);
             const linkDestaque = gerarLinkDestaque(d.id);
+            
+            // Sanitização para evitar quebra de strings no HTML/JS
+            const descReal = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
+            const nomeReal = p.nome.replace(/'/g, "\\'");
 
             if (d.id === activeProductId) {
                 if (modo === 'gourmet') {
@@ -99,7 +102,7 @@ async function carregarDadosEProdutos() {
                                         <div style="font-size:13px; color:#666; margin-bottom:5px;">Tamanho</div>
                                         <div class="tamanho-grid">${['P','M','G','GG'].map(t => `<div class="btn-tamanho" onclick="selecionarTamanho(this, '${t}')">${t}</div>`).join('')}</div>
                                     </div>` : ''}
-                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${otimizarURL(fotos[0], 100)}', '${linkDestaque}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
+                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${nomeReal}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${otimizarURL(fotos[0], 100)}', '${linkDestaque}', '${descReal}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
                             </div>
                         </div><hr style="border:0; border-top:8px solid #eee; margin:0;">`;
                 }
@@ -118,6 +121,12 @@ async function carregarDadosEProdutos() {
         mainContainer.innerHTML = htmlDestaque + (htmlGridLojista ? `<div style="padding:15px 15px 5px; font-weight:800; color:#555; font-size:13px;">MAIS PRODUTOS:</div><div class="grid-produtos">${htmlGridLojista}</div>` : "");
     } catch (e) { console.error(e); }
 }
+
+window.selecionarTamanho = (btn, tamanho) => {
+    document.querySelectorAll('.btn-tamanho').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    window.tamanhoSelecionadoAtual = tamanho;
+};
 
 window.abrirConfigComida = async (id, isGlobal = false) => {
     if (isGlobal) {
@@ -166,11 +175,13 @@ function renderizarModalConfig() {
             adds.push(a.nome);
         });
         if(adds.length > 0) detalhesPedido.push(`Adicionais: ${adds.join(', ')}`);
+        
         const obs = document.getElementById('gourmet-obs').value;
         if(obs) detalhesPedido.push(`Obs: ${obs}`);
 
-        let nomeFinalWhatsApp = itemAtualConfig.nome;
-        if(detalhesPedido.length > 0) nomeFinalWhatsApp += ` (${detalhesPedido.join(' | ')})`;
+        // A descrição final para o carrinho inclui a descrição original + as configurações escolhidas
+        const configTexto = detalhesPedido.length > 0 ? ` | Escolhas: ${detalhesPedido.join(' | ')}` : "";
+        const descricaoFinal = (itemAtualConfig.descricao || "") + configTexto;
 
         const precoFormatado = total.toFixed(2).replace('.', ',');
         const linkDestaque = gerarLinkDestaque(itemAtualConfig.id);
@@ -178,12 +189,13 @@ function renderizarModalConfig() {
 
         window.adicionarAoCarrinho(
             itemAtualConfig.id, 
-            nomeFinalWhatsApp, 
+            itemAtualConfig.nome, 
             precoFormatado, 
             itemAtualConfig.owner, 
             itemAtualConfig.whatsapp, 
             otimizarURL(fotoFinal, 100),
-            linkDestaque
+            linkDestaque,
+            descricaoFinal
         );
         
         document.getElementById('gourmet-obs').value = '';
