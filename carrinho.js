@@ -1,13 +1,9 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO: Agora prioriza a descrição detalhada para diferenciar itens
+// 1. ADICIONAR AO CARRINHO
 window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    
-    // O item carrega a descrição para que o lojista saiba exatamente o que foi escolhido (ex: ingredientes)
     const item = { id, nome, preco, owner, whatsapp, imagem, descricao, qtd: 1 };
-    
-    // A busca agora considera ID + Nome + Descrição para evitar que produtos com adicionais diferentes se somem erroneamente
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricao);
     
     if (index > -1) { 
@@ -26,7 +22,7 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, descrica
     }
 };
 
-// 2. ALTERAR QUANTIDADE: Mantém a consistência dos dados
+// 2. ALTERAR QUANTIDADE
 window.alterarQuantidadeCarrinho = (id, delta) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const index = carrinho.findIndex(i => i.id === id);
@@ -48,54 +44,56 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO: Montagem da mensagem detalhada para o WhatsApp
+// 4. FINALIZAR PEDIDO (AJUSTE PROFISSIONAL DE MENSAGEM)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
 
-    let texto = `*✅ NOVO PEDIDO - PEDE AÍ*\n`;
-    texto += `------------------------------------------\n\n`;
+    // Cabeçalho elegante
+    let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
+    texto += `_________________________________\n\n`;
     
     let total = 0;
     itensLoja.forEach((item) => {
-        // Tratamento de preço para cálculo
         const precoLimpo = parseFloat(item.preco.replace('R$', '').replace(/\./g, '').replace(',', '.'));
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
 
-        texto += `*${item.qtd}x ${item.nome.toUpperCase()}*\n`;
+        texto += `*item:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
-        // Inclusão da descrição detalhada (ingredientes/detalhes)
+        // Descrição/Ingredientes com destaque visual
         if (item.descricao && item.descricao.trim() !== "") {
-            texto += `_Detalhes: ${item.descricao}_\n`;
+            texto += `*obs:* _${item.descricao}_\n`;
         }
         
-        texto += `Valor Unitário: R$ ${item.preco}\n`;
+        texto += `*valor:* R$ ${item.preco}\n`;
         
+        // Link de imagem curto (Otimização para Cloudinary se disponível)
         if (item.imagem && item.imagem.trim() !== "") {
-            texto += `Foto: ${item.imagem}\n`;
+            // Tenta reduzir a URL do Cloudinary removendo parâmetros desnecessários ou forçando redimensionamento via URL
+            const urlCurta = item.imagem.split('?')[0]; 
+            texto += `🔗 _Foto: ${urlCurta}_\n`;
         }
         texto += `\n`;
     });
 
-    texto += `------------------------------------------\n`;
-    texto += `*TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
-    texto += `------------------------------------------`;
+    texto += `_________________________________\n`;
+    texto += `*💰 TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
+    texto += `_________________________________\n\n`;
+    texto += `*Pede Aí* - _Pedido gerado via catálogo_`;
 
-    // Limpa apenas os itens desta loja após o pedido
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novoCarrinho));
     
     window.atualizarIconeCarrinho();
     window.abrirModalCarrinho();
     
-    // Disparo para o WhatsApp
     const fone = itensLoja[0].whatsapp.replace(/\D/g, '');
     window.open(`https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`, '_blank');
 };
 
-// 5. INTERFACE E UI (Mantido original conforme solicitado)
+// 5. INTERFACE E UI
 window.atualizarIconeCarrinho = () => {
     const flutuante = document.getElementById('carrinho-flutuante');
     const contador = document.getElementById('cart-count') || document.getElementById('carrinho-count');
@@ -160,7 +158,7 @@ window.abrirModalCarrinho = () => {
                         </div>
                     `).join('')}
                     <button class="btn-finish-store" onclick="finalizarGrupoLojista('${owner}')">
-                        <i class="fab fa-whatsapp"></i> Pedir desta Loja
+                        <i class="fab fa-whatsapp"></i> Enviar Pedido
                     </button>
                 </div>`;
         }
