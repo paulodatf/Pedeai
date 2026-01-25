@@ -1,9 +1,9 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO (Agora recebe 'link' em vez de 'imagem')
-window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, linkProduto, descricao = "") => {
+// 1. ADICIONAR AO CARRINHO (Mantém imagem para UI e link para WhatsApp)
+window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    const item = { id, nome, preco, owner, whatsapp, linkProduto, descricao, qtd: 1 };
+    const item = { id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao, qtd: 1 };
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricao);
     
     if (index > -1) { 
@@ -44,7 +44,7 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (OTIMIZADO COM LINK DO PRODUTO)
+// 4. FINALIZAR PEDIDO (ENVIA LINK NO LUGAR DA IMAGEM)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
@@ -67,7 +67,6 @@ window.finalizarGrupoLojista = (ownerId) => {
         
         texto += `*VALOR:* R$ ${item.preco}\n`;
         
-        // Substituído Foto por Link do Produto
         if (item.linkProduto) {
             texto += `🔗 *VER PRODUTO:* ${item.linkProduto}\n`;
         }
@@ -89,7 +88,7 @@ window.finalizarGrupoLojista = (ownerId) => {
     window.open(urlFinal, '_blank');
 };
 
-// 5. INTERFACE E UI
+// 5. INTERFACE E UI (MANTÉM MINI FOTINHA VISÍVEL)
 window.atualizarIconeCarrinho = () => {
     const flutuante = document.getElementById('carrinho-flutuante');
     const contador = document.getElementById('cart-count') || document.getElementById('carrinho-count');
@@ -140,6 +139,7 @@ window.abrirModalCarrinho = () => {
                     <div class="cart-store-header">PEDIDO PARA LOJA</div>
                     ${itens.map(i => `
                         <div class="cart-item">
+                            <img src="${i.imagem}" style="width:40px; height:40px; border-radius:5px; object-fit:cover;">
                             <div class="cart-item-info">
                                 <div class="cart-item-name">${i.nome}</div>
                                 <div class="cart-item-price">R$ ${i.preco}</div>
