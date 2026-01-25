@@ -2,236 +2,122 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Admin | Pede Aí</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vitrine Digital</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --primary: #ee4d2d; 
-            --success: #28a745; 
-            --info: #17a2b8; 
-            --warning: #ffc107; 
-            --danger: #dc3545; 
-            --dark: #2c3e50; 
-            --light-bg: #f8f9fa;
-            --white: #ffffff;
-            --border: #eaedf3;
-        }
+        :root { --orange: #ee4d2d; --bg: #f5f5f5; --ifood-red: #ea1d2c; --gourmet-dark: #2d2d2d; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background-color: var(--bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow-x: hidden; }
         
-        body { font-family: 'Inter', sans-serif; background: #f0f2f5; margin: 0; color: var(--dark); }
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+        /* Cabeçalho Compacto */
+        .header-cartao { background: #fff; padding: 12px 15px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; min-height: 70px; }
+        .foto-cartao { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--orange); flex-shrink: 0; }
+        .info-loja-header { flex-grow: 1; text-align: left; overflow: hidden; }
+        .nome-loja-cartao { margin: 0; font-size: 15px; font-weight: 800; color: #111; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .msg-boas-vindas { font-size: 11px; color: #777; margin: 0; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .btn-voltar-topo { color: #444; text-decoration: none; font-size: 18px; padding-right: 5px; }
+
+        /* Estilo Gourmet */
+        body.gourmet-mode { background: #fff; }
+        body.gourmet-mode .foto-cartao { border-color: var(--ifood-red); }
+        body.gourmet-mode .nome-loja-cartao { color: var(--ifood-red); }
+
+        /* AJUSTE: LARGURA TOTAL COM ALTURA CONTROLADA (MODO PRODUTO) */
+        .destaque-produto-modo-prod { background: #fff; width: 100%; display: flex; flex-direction: column; }
+        .container-img-padrao { width: 100%; height: 380px; background: #fff; display: flex; overflow: hidden; }
+        .img-padrao-display { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Header */
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
-        header h1 { font-size: 22px; margin: 0; color: var(--dark); font-weight: 800; }
-        header p { color: #6c757d; margin: 5px 0 0 0; font-size: 14px; }
+        /* Design Descrição Produto */
+        .info-area-prod { padding: 18px; }
+        .info-area-prod h2 { margin: 0 0 8px; font-size: 20px; color: #111; font-weight: 700; }
+        .info-area-prod .preco-destaque { color: var(--orange); font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+        .desc-produto-simples { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 15px; border-left: 3px solid #eee; padding-left: 12px; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .stat-card { background: var(--white); padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); border: 1px solid var(--border); }
-        .stat-card small { color: #8898aa; font-size: 12px; text-transform: uppercase; font-weight: 600; }
-        .stat-card h2 { margin: 5px 0 0; font-size: 24px; color: var(--dark); }
+        /* Design Descrição Gourmet */
+        .container-gourmet-destaque { padding: 20px; background: #fff; }
+        .img-gourmet-destaque { width: 100%; border-radius: 16px; aspect-ratio: 1.2/1; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .titulo-gourmet-destaque { margin: 20px 0 6px; font-size: 22px; color: #2d2d2d; font-weight: 800; letter-spacing: -0.5px; }
+        .preco-gourmet-destaque { color: var(--ifood-red); font-size: 24px; font-weight: 800; margin-bottom: 12px; }
+        .card-desc-gourmet { background: #fffcf5; border: 1px solid #f9ebd1; padding: 15px; border-radius: 12px; margin-bottom: 20px; position: relative; }
+        .card-desc-gourmet i { color: #d4a373; font-size: 12px; margin-bottom: 5px; display: block; }
+        .texto-desc-gourmet { color: #4a4a4a; font-size: 14px; font-style: italic; line-height: 1.6; margin: 0; }
 
-        /* Dash Cards */
-        .dash-card { background: var(--white); border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid var(--border); }
-        .card-header { padding: 20px 25px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .card-header h3 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 10px; }
-        .card-content { display: none; padding: 0 25px 20px; border-top: 1px solid var(--border); }
-        .card-content.active { display: block; animation: fadeIn 0.3s ease; }
+        /* Grid de Produtos */
+        .grid-produtos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 10px; }
+        .card-p { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #eee; cursor: pointer; }
+        .card-p img { width: 100%; aspect-ratio: 1/1; object-fit: cover; }
+        .card-p-info { padding: 8px; }
+        .card-p-name { font-size: 12px; font-weight: 600; color: #333; height: 32px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+        .card-p-price { color: var(--orange); font-weight: 800; font-size: 14px; margin-top: 4px; }
+        body.gourmet-mode .card-p-price { color: var(--ifood-red); }
 
-        /* List Items */
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 0; border-bottom: 1px solid #f8f9fa; }
-        .list-item:last-child { border-bottom: none; }
-        .info b { font-size: 15px; color: var(--dark); display: flex; align-items: center; gap: 8px; }
-        .info span { display: block; font-size: 12px; color: #8898aa; margin-top: 4px; }
-        
-        /* Status & Badges */
-        .badge { background: #eee; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
-        .tag-plano { padding: 2px 8px; border-radius: 4px; font-size: 10px; color: white; text-transform: uppercase; }
-        .vencimento { font-size: 11px; font-weight: bold; margin-top: 5px; }
-        .vencido { color: var(--danger); }
-        .em-dia { color: var(--success); }
+        /* Botão Montar */
+        #barMontar { position: fixed; bottom: 20px; left: 0; width: 100%; padding: 0 15px; display: none; justify-content: center; z-index: 999; }
+        .btn-montar-global { width: 100%; max-width: 400px; background: var(--ifood-red); color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 15px rgba(234, 29, 44, 0.4); text-transform: uppercase; }
 
-        /* Buttons */
-        .actions { display: flex; gap: 8px; }
-        .btn { padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; transition: 0.2s; text-decoration: none; }
-        .btn-approve { background: var(--success); color: white; }
-        .btn-block { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
-        .btn-unblock { background: #fff; border: 1px solid var(--success); color: var(--success); }
-        .btn-zap { background: #25d366; color: white; }
-        .btn:hover { opacity: 0.8; transform: translateY(-1px); }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @media (max-width: 600px) {
-            .list-item { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .actions { width: 100%; justify-content: space-between; }
-        }
+        /* Utilitários */
+        .tamanho-container { padding: 5px 0 15px 0; }
+        .tamanho-grid { display: flex; gap: 8px; margin-top: 8px; }
+        .btn-tamanho { border: 1px solid #ddd; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+        .btn-tamanho.selected { background: var(--orange); color: #fff; border-color: var(--orange); }
+        .btn-action-main { width: 100%; padding: 16px; border-radius: 12px; border: none; color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; text-transform: uppercase; transition: transform 0.1s; }
+        .btn-action-main:active { transform: scale(0.98); }
     </style>
 </head>
-<body>
+<body class="vitrine-cartao-page">
 
-<div class="container">
-    <header>
-        <div>
-            <h1><i class="fas fa-user-shield"></i> Painel de Controle</h1>
-            <p>Gerenciamento de lojistas e faturamento</p>
+    <header class="header-cartao">
+        <a href="index.html" class="btn-voltar-topo"><i class="fas fa-chevron-left"></i></a>
+        <img id="fotoLojista" src="" class="foto-cartao" alt="Logo">
+        <div class="info-loja-header">
+            <h1 id="nomeLojista" class="nome-loja-cartao"></h1>
+            <p id="msgBoasVindas" class="msg-boas-vindas"></p>
         </div>
     </header>
 
-    <div class="stats-grid">
-        <div class="stat-card">
-            <small>Aguardando</small>
-            <h2 id="stat-pendentes">0</h2>
-        </div>
-        <div class="stat-card">
-            <small>Lojistas Ativos</small>
-            <h2 id="stat-ativos">0</h2>
-        </div>
-        <div class="stat-card">
-            <small>Bloqueados</small>
-            <h2 id="stat-bloqueados" style="color:var(--danger)">0</h2>
-        </div>
+    <div id="barMontar">
+        <button class="btn-montar-global" onclick="window.abrirConfigComida('montar_global', true)">
+            <i class="fas fa-utensils"></i> <span id="txtBarMontar">MONTAR MEU PEDIDO</span>
+        </button>
     </div>
 
-    <div class="dash-card" style="border-top: 4px solid var(--success); margin-bottom: 20px;">
-        <div class="card-header">
-            <h3 style="margin:0;"><i class="fab fa-whatsapp" style="color:var(--success)"></i> WhatsApp do Suporte</h3>
-        </div>
-        <div class="card-content" style="padding: 20px; display: block !important;">
-            <div style="display: flex; gap: 10px;">
-                <input type="text" id="inputZapSuporte" placeholder="Ex: 5511999999999" 
-                    style="flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 16px;">
-                <button onclick="salvarZapSuporte()" 
-                    style="background: var(--success); color: white; border: none; padding: 0 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
-                    SALVAR
-                </button>
-            </div>
-            <small style="display:block; margin-top:8px; color:#666;">Digite o número com 55 + DDD + Número (apenas números).</small>
-        </div>
-    </div>
-    
-    <div class="dash-card">
-        <div class="card-header" onclick="toggleCard('box-pendentes')">
-            <h3><i class="fas fa-clock" style="color:var(--warning)"></i> Novos Cadastros</h3>
-            <span class="badge" id="badge-pendentes">0</span>
-        </div>
-        <div id="box-pendentes" class="card-content"></div>
-    </div>
+    <main id="productDetail"></main>
 
-    <div class="dash-card">
-        <div class="card-header" onclick="toggleCard('box-ativos')">
-            <h3><i class="fas fa-check-circle" style="color:var(--success)"></i> Lojistas Ativos</h3>
-            <span class="badge" id="badge-ativos">0</span>
+    <div id="overlayComida" onclick="window.fecharModalComida()" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:10500; display:none;"></div>
+    <div id="modalComida" style="position:fixed; bottom:-100%; left:0; width:100%; background:#fff; z-index:11000; transition:0.4s; border-radius:20px 20px 0 0; max-height:90vh; overflow-y:auto;">
+        <div style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; position:sticky; top:0; background:#fff; z-index:10;">
+            <h3 id="modalNome" style="margin:0; font-size:18px;">Personalizar</h3>
+            <i class="fas fa-times" onclick="window.fecharModalComida()" style="cursor:pointer; font-size:20px;"></i>
         </div>
-        <div id="box-ativos" class="card-content"></div>
-    </div>
-
-    <div class="dash-card">
-        <div class="card-header" onclick="toggleCard('box-bloqueados')">
-            <h3><i class="fas fa-ban" style="color:var(--danger)"></i> Lojistas Bloqueados</h3>
-            <span class="badge" id="badge-bloqueados">0</span>
-        </div>
-        <div id="box-bloqueados" class="card-content"></div>
-    </div>
-</div>
-
-<script type="module">
-    import { db, GetRegrasLojista } from './config.js';
-    import { collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-    window.toggleCard = (id) => {
-        const el = document.getElementById(id);
-        const isActive = el.classList.contains('active');
-        if(isActive) {
-            el.classList.remove('active');
-        } else {
-            document.querySelectorAll('.card-content').forEach(c => c.classList.remove('active'));
-            el.classList.add('active');
-        }
-    };
-
-    onSnapshot(collection(db, "usuarios"), (snap) => {
-        const listP = document.getElementById('box-pendentes');
-        const listA = document.getElementById('box-ativos');
-        const listB = document.getElementById('box-bloqueados');
+        <div id="modalContent"></div>
         
-        let cP = 0, cA = 0, cB = 0;
-        listP.innerHTML = listA.innerHTML = listB.innerHTML = "";
+        <div id="container-desc-modal" style="padding: 10px 15px; background: #fffcf5; margin: 10px 15px; border-radius: 8px; border: 1px dashed #f39c12;">
+            <h4 style="margin: 0 0 5px 0; color: #e67e22; font-size: 13px; display: flex; align-items: center; gap: 5px;">
+                <i class="fas fa-info-circle"></i> Detalhes do Item:
+            </h4>
+            <p id="texto-descricao-gourmet" style="margin: 0; font-size: 13px; color: #555; font-style: italic; line-height: 1.4;"></p>
+        </div>
 
-        snap.forEach(d => {
-            const u = d.data();
-            const id = d.id;
-            const regras = GetRegrasLojista(u);
-            
-            const vencimentoTexto = (regras.vencido) 
-                ? `<span class="vencimento vencido"><i class="fas fa-exclamation-triangle"></i> VENCIDO HÁ ${Math.abs(regras.diasParaVencer)} DIAS</span>`
-                : `<span class="vencimento em-dia"><i class="fas fa-calendar-day"></i> Vence em ${regras.diasParaVencer} dias</span>`;
+        <div style="padding:15px;">
+            <textarea id="gourmet-obs" placeholder="Alguma observação? (Ex: tirar cebola)" style="width:100%; height:60px; padding:10px; border-radius:8px; border:1px solid #ddd; font-family:inherit; font-size:13px; resize:none;"></textarea>
+            <button id="btnConfirmarConfig" class="btn-action-main" style="background:var(--ifood-red); margin-top:10px;">Confirmar</button>
+        </div>
+    </div>
 
-            const itemHTML = `
-                <div class="list-item">
-                    <div class="info">
-                        <b>${u.nomeLoja || 'Sem Nome'} <span class="tag-plano" style="background:${regras.corPlano}">${regras.planoNome}</span></b>
-                        <span><i class="fas fa-envelope"></i> ${u.email}</span>
-                        <span><i class="fas fa-phone"></i> ${u.whatsapp}</span>
-                        ${u.status !== 'pendente' ? vencimentoTexto : ''}
-                    </div>
-                    <div class="actions">
-                        <a href="https://wa.me/${(u.whatsapp||'').replace(/\D/g,'')}" target="_blank" class="btn btn-zap" title="Cobrar via WhatsApp">
-                            <i class="fab fa-whatsapp"></i> CONTATO
-                        </a>
-                        
-                        ${u.status === 'pendente' ? 
-                            `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-approve">APROVAR</button>` : ''
-                        }
-
-                        ${u.status === 'ativo' ? 
-                            `<button onclick="actionUser('${id}', 'bloqueado')" class="btn btn-block">BLOQUEAR</button>` : ''
-                        }
-
-                        ${u.status === 'bloqueado' ? 
-                            `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-unblock">REATIVAR</button>` : ''
-                        }
-                    </div>
-                </div>`;
-
-            if(u.status === 'pendente') { listP.innerHTML += itemHTML; cP++; }
-            else if(u.status === 'bloqueado') { listB.innerHTML += itemHTML; cB++; }
-            else { listA.innerHTML += itemHTML; cA++; }
-        });
-
-        document.getElementById('badge-pendentes').innerText = cP;
-        document.getElementById('badge-ativos').innerText = cA;
-        document.getElementById('badge-bloqueados').innerText = cB;
-        document.getElementById('stat-pendentes').innerText = cP;
-        document.getElementById('stat-ativos').innerText = cA;
-        document.getElementById('stat-bloqueados').innerText = cB;
-    });
-
-    window.actionUser = async (id, novoStatus) => { 
-        try {
-            await updateDoc(doc(db, "usuarios", id), { 
-                status: String(novoStatus).trim().toLowerCase()
-            });
-        } catch (e) {
-            console.error("Erro ao atualizar status:", e);
-            alert("Erro ao realizar ação.");
-        }
-    };
-
-    window.salvarZapSuporte = () => {
-        const input = document.getElementById('inputZapSuporte');
-        const num = input.value.replace(/\D/g, ''); 
-        if(num.length < 10) return alert("Número inválido! Use o formato: 5511999999999");
-        
-        localStorage.setItem('zapSuporteGeral', num);
-        alert("Número de suporte atualizado com sucesso!");
-        location.reload(); 
-    };
-
-    const campoSuporte = document.getElementById('inputZapSuporte');
-    if (campoSuporte) {
-        campoSuporte.value = localStorage.getItem('zapSuporteGeral') || "";
-    }
-</script>
+    <script src="./carrinho.js"></script>
+    <script type="module" src="./vitrine-cartao.js"></script>
+    <script>
+        window.fecharModalComida = () => {
+            document.getElementById('modalComida').style.bottom = '-100%';
+            document.getElementById('overlayComida').style.display = 'none';
+        };
+        window.selecionarTamanho = (btn, tamanho) => {
+            const container = btn.parentElement;
+            container.querySelectorAll('.btn-tamanho').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            window.tamanhoSelecionadoAtual = tamanho;
+        };
+    </script>
 </body>
 </html>
