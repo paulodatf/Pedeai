@@ -1,9 +1,9 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO
-window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, descricao = "") => {
+// 1. ADICIONAR AO CARRINHO (Agora recebe 'link' em vez de 'imagem')
+window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, linkProduto, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    const item = { id, nome, preco, owner, whatsapp, imagem, descricao, qtd: 1 };
+    const item = { id, nome, preco, owner, whatsapp, linkProduto, descricao, qtd: 1 };
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricao);
     
     if (index > -1) { 
@@ -44,13 +44,12 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (MENSAGEM PROFISSIONAL OTIMIZADA)
+// 4. FINALIZAR PEDIDO (OTIMIZADO COM LINK DO PRODUTO)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
 
-    // Cabeçalho Profissional
     let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
     texto += `------------------------------------------\n\n`;
     
@@ -68,11 +67,9 @@ window.finalizarGrupoLojista = (ownerId) => {
         
         texto += `*VALOR:* R$ ${item.preco}\n`;
         
-        // Formatação de Link de Imagem Elegante
-        if (item.imagem && item.imagem.trim() !== "") {
-            // Remove parâmetros de query longos para manter o link mais curto
-            const urlCurta = item.imagem.split('?')[0]; 
-            texto += `📸 *FOTO:* ${urlCurta}\n`;
+        // Substituído Foto por Link do Produto
+        if (item.linkProduto) {
+            texto += `🔗 *VER PRODUTO:* ${item.linkProduto}\n`;
         }
         texto += `------------------------------------------\n`;
     });
@@ -143,7 +140,6 @@ window.abrirModalCarrinho = () => {
                     <div class="cart-store-header">PEDIDO PARA LOJA</div>
                     ${itens.map(i => `
                         <div class="cart-item">
-                            <img src="${i.imagem}" class="cart-item-img">
                             <div class="cart-item-info">
                                 <div class="cart-item-name">${i.nome}</div>
                                 <div class="cart-item-price">R$ ${i.preco}</div>
@@ -178,7 +174,6 @@ function inicializarCarrinho() {
         .cart-store-group { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         .cart-store-header { font-size: 10px; color: #999; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; }
         .cart-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .cart-item-img { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; }
         .cart-item-info { flex: 1; }
         .cart-item-name { font-size: 13px; font-weight: bold; color: #333; }
         .cart-item-price { font-size: 12px; color: #ee4d2d; }
@@ -206,7 +201,6 @@ function inicializarCarrinho() {
     setInterval(window.atualizarIconeCarrinho, 400);
 }
 
-// Inicialização segura
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarCarrinho);
 } else {

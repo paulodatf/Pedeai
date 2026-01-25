@@ -8,11 +8,13 @@ window.tamanhoSelecionadoAtual = null;
 function otimizarURL(url, width = 400) {
     if (!url || typeof url !== 'string') return url;
     if (!url.includes('cloudinary.com')) return url;
+    return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
+}
 
-    return url.replace(
-        /\/upload\/(.*?)(\/v\d+\/)/,
-        `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`
-    );
+// Função para gerar link do produto
+function gerarLinkVitrine(sellerId, prodId, modo) {
+    const base = window.location.origin + window.location.pathname;
+    return `${base}?seller=${sellerId}&product=${prodId}&modo=${modo}`;
 }
 
 export async function carregarVitrineCompleta() {
@@ -34,7 +36,6 @@ export async function carregarVitrineCompleta() {
                 lojistaInfo = s.data();
                 lojistaInfoCache = lojistaInfo;
                 lojistaInfoCache.id = sellerId;
-                
                 regrasLojista = GetRegrasLojista(lojistaInfo);
 
                 if (!regrasLojista.podeExibirProdutos || regrasLojista.isBloqueado) {
@@ -66,9 +67,7 @@ export async function carregarVitrineCompleta() {
                         if(txtBtn) txtBtn.innerText = lojistaInfo.montarTitulo || 'MONTAR MEU PEDIDO';
                     }
                 }
-            } else {
-                return;
-            }
+            } else { return; }
         }
 
         const snap = await getDocs(collection(db, "produtos"));
@@ -83,13 +82,12 @@ export async function carregarVitrineCompleta() {
 
         snap.forEach(d => {
             const p = d.data();
-            
             if (p.status === "desativado" || p.visivel === false) return;
 
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
             const imgCapa = otimizarURL(fotos[0] || "https://via.placeholder.com/300", 600);
+            const linkProduto = gerarLinkVitrine(sellerId, d.id, modo);
             const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
-            
             const descSanitizada = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
 
             const funcAddDiretoGeral = `
@@ -99,7 +97,7 @@ export async function carregarVitrineCompleta() {
                     const preco = '${p.preco}';
                     const owner = '${p.owner}';
                     const whatsapp = '${p.whatsapp}';
-                    const img = '${imgCapa}';
+                    const link = '${linkProduto}';
                     const tipo = '${p.tipoProduto || ""}';
                     const desc = '${descSanitizada}';
                     
@@ -108,14 +106,14 @@ export async function carregarVitrineCompleta() {
                             alert('Por favor, selecione um tamanho antes de adicionar.');
                             return;
                         }
-                        window.adicionarAoCarrinho(id, nome + ' (Tam: ' + window.tamanhoSelecionadoAtual + ')', preco, owner, whatsapp, img, desc);
+                        window.adicionarAoCarrinho(id, nome + ' (Tam: ' + window.tamanhoSelecionadoAtual + ')', preco, owner, whatsapp, link, desc);
                     } else {
-                        window.adicionarAoCarrinho(id, nome, preco, owner, whatsapp, img, desc);
+                        window.adicionarAoCarrinho(id, nome, preco, owner, whatsapp, link, desc);
                     }
                 })()
             `;
 
-            const funcAddDiretoSimples = `window.adicionarAoCarrinho('${d.id}', '${p.nome.replace(/'/g, "\\'")}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}', '${descSanitizada}')`;
+            const funcAddDiretoSimples = `window.adicionarAoCarrinho('${d.id}', '${p.nome.replace(/'/g, "\\'")}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${linkProduto}', '${descSanitizada}')`;
             const funcAddConfig = `window.abrirConfigComida('${d.id}', false)`;
 
             if (p.categoria !== categoriaAtiva) return;
@@ -147,19 +145,9 @@ export async function carregarVitrineCompleta() {
                 } else {
                     let htmlRoupa = "";
                     if(p.tipoProduto === 'roupa') {
-                        let opcoes = [];
-                        if(p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) opcoes = p.tamanhosDisponiveis;
-                        else if(p.numeracoes) opcoes = p.numeracoes.split(',').map(s => s.trim());
-
+                        let opcoes = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) ? p.tamanhosDisponiveis : (p.numeracoes ? p.numeracoes.split(',').map(s => s.trim()) : []);
                         if(opcoes.length > 0) {
-                            htmlRoupa = `
-                                <div class="tamanho-container">
-                                    <span class="tamanho-label">Selecione o Tamanho:</span>
-                                    <div class="tamanho-grid">
-                                        ${opcoes.map(t => `<button class="btn-tamanho" onclick="window.selecionarTamanho(this, '${t}')">${t}</button>`).join('')}
-                                    </div>
-                                </div>
-                            `;
+                            htmlRoupa = `<div class="tamanho-container"><span class="tamanho-label">Selecione o Tamanho:</span><div class="tamanho-grid">${opcoes.map(t => `<button class="btn-tamanho" onclick="window.selecionarTamanho(this, '${t}')">${t}</button>`).join('')}</div></div>`;
                         }
                     }
 
@@ -176,12 +164,10 @@ export async function carregarVitrineCompleta() {
                             <div class="product-info-box" style="padding: 20px;">
                                 <div class="p-price-main" style="color: #ee4d2d; font-size: 28px; font-weight: bold;">R$ ${p.preco}</div>
                                 <div class="p-name-main" style="font-size: 18px; margin-top: 8px; color: #333; font-weight: 500;">${p.nome}</div>
-                                
                                 <div class="desc-produto-box">
                                     <span class="desc-produto-label">Descrição:</span>
                                     <p class="desc-produto-text">${p.descricao || 'Nenhuma descrição informada.'}</p>
                                 </div>
-
                                 ${htmlRoupa}
                                 <button onclick="${funcAddDiretoGeral}" class="btn-whatsapp" style="width: 100%; background: #25d366; color: white; padding: 16px; border: none; border-radius: 8px; font-weight: bold; margin-top: 20px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
                                     <i class="fas fa-cart-plus"></i> ADICIONAR AO CARRINHO
@@ -218,70 +204,41 @@ export async function carregarVitrineCompleta() {
             });
         }
 
-    } catch (error) {
-        console.error("Erro ao carregar vitrine:", error);
-    }
+    } catch (error) { console.error("Erro ao carregar vitrine:", error); }
 }
 
 window.abrirConfigComida = async (id, isGlobal = false) => {
     const modal = document.getElementById('modalComida');
     const overlay = document.getElementById('overlayComida');
     const content = document.getElementById('modalContent');
-    const btnConfirmar = document.getElementById('btnConfirmarConfig');
     
     content.innerHTML = "Carregando...";
     modal.classList.add('active');
     overlay.style.display = 'block';
 
     let configData = null;
-
     if (isGlobal) {
-        configData = {
-            nome: lojistaInfoCache.montarTitulo || "Personalizar",
-            variacoes: lojistaInfoCache.montarVariacoes || [],
-            adicionais: lojistaInfoCache.montarAdicionais || [],
-            isMontarGlobal: true,
-            owner: lojistaInfoCache.id,
-            whatsapp: lojistaInfoCache.whatsapp,
-            descricao: ""
-        };
+        configData = { nome: lojistaInfoCache.montarTitulo || "Personalizar", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, descricao: "" };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
-        if (d.exists()) {
-            configData = d.data();
-            configData.id = d.id;
-        }
+        if (d.exists()) { configData = d.data(); configData.id = d.id; }
     }
 
     if (!configData) return;
     itemAtualConfig = configData;
 
     let html = "";
-    if (configData.variacoes && configData.variacoes.length > 0) {
+    if (configData.variacoes?.length > 0) {
         html += `<div class="config-section-title">Escolha uma opção</div>`;
         configData.variacoes.forEach((v, idx) => {
-            html += `
-                <label class="config-item">
-                    <div class="config-info">
-                        <span class="config-name">${v.nome}</span>
-                        <span class="config-price">+ R$ ${v.preco}</span>
-                    </div>
-                    <input type="radio" name="variacao" value="${idx}" onchange="window.atualizarPrecoModal()" ${idx === 0 ? 'checked' : ''}>
-                </label>`;
+            html += `<label class="config-item"><div class="config-info"><span class="config-name">${v.nome}</span><span class="config-price">+ R$ ${v.preco}</span></div><input type="radio" name="variacao" value="${idx}" onchange="window.atualizarPrecoModal()" ${idx === 0 ? 'checked' : ''}></label>`;
         });
     }
 
-    if (configData.adicionais && configData.adicionais.length > 0) {
+    if (configData.adicionais?.length > 0) {
         html += `<div class="config-section-title">Adicionais</div>`;
         configData.adicionais.forEach((a, idx) => {
-            html += `
-                <label class="config-item">
-                    <div class="config-info">
-                        <span class="config-name">${a.nome}</span>
-                        <span class="config-price">+ R$ ${a.preco}</span>
-                    </div>
-                    <input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()">
-                </label>`;
+            html += `<label class="config-item"><div class="config-info"><span class="config-name">${a.nome}</span><span class="config-price">+ R$ ${a.preco}</span></div><input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()"></label>`;
         });
     }
 
@@ -289,9 +246,9 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
     document.getElementById('modalNome').innerText = configData.nome;
     
     const campoDescModal = document.getElementById('texto-descricao-modal');
-    const containerDescModal = document.getElementById('container-desc-modal');
     if(campoDescModal) {
         campoDescModal.innerText = itemAtualConfig.descricao || "Ingredientes tradicionais da casa.";
+        const containerDescModal = document.getElementById('container-desc-modal');
         if(containerDescModal) containerDescModal.style.display = itemAtualConfig.descricao ? 'block' : 'none';
     }
     
@@ -307,33 +264,25 @@ window.atualizarPrecoModal = () => {
     });
     document.getElementById('btnConfirmarConfig').innerText = `ADICIONAR R$ ${total.toFixed(2).replace('.', ',')}`;
     document.getElementById('btnConfirmarConfig').onclick = () => {
-        let nomeFinal = itemAtualConfig.nome;
         let resumoConfig = "";
-        
         if(varSelected) resumoConfig += ` (${itemAtualConfig.variacoes[varSelected.value].nome})`;
-        
         let extras = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => { extras.push(itemAtualConfig.adicionais[cb.value].nome); });
+        if(extras.length > 0) resumoConfig += itemAtualConfig.isMontarGlobal ? ` [Montagem: ${extras.join(', ')}]` : ` + ${extras.join(', ')}`;
         
-        if(extras.length > 0) {
-            resumoConfig += itemAtualConfig.isMontarGlobal ? ` [Montagem: ${extras.join(', ')}]` : ` + ${extras.join(', ')}`;
-        }
-        
-        const obs = document.getElementById('gourmet-obs') ? document.getElementById('gourmet-obs').value : "";
+        const obs = document.getElementById('gourmet-obs')?.value || "";
         if(obs) resumoConfig += ` [Obs: ${obs}]`;
         
-        // A descrição detalhada agora combina a descrição original + as escolhas do modal
         const descricaoFinal = (itemAtualConfig.descricao || "") + (resumoConfig ? " | Escolhas: " + resumoConfig : "");
-        
-        const img = otimizarURL(itemAtualConfig.foto || (itemAtualConfig.fotos && itemAtualConfig.fotos[0]) || "", 300);
-        
+        const linkProduto = gerarLinkVitrine(lojistaInfoCache.id, itemAtualConfig.id || 'montar_global', (new URLSearchParams(window.location.search)).get('modo') || 'produto');
+
         window.adicionarAoCarrinho(
             itemAtualConfig.id || 'montar_global', 
-            nomeFinal, 
+            itemAtualConfig.nome, 
             total.toFixed(2).replace('.', ','), 
             itemAtualConfig.owner, 
             itemAtualConfig.whatsapp, 
-            img, 
+            linkProduto, 
             descricaoFinal
         );
         

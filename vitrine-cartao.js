@@ -16,6 +16,12 @@ function otimizarURL(url, width = 400) {
     return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
 }
 
+// Função para gerar link direto do produto
+function gerarLinkProduto(prodId) {
+    const base = window.location.origin + window.location.pathname;
+    return `${base}?seller=${lojistaId}&product=${prodId}&modo=${modo}`;
+}
+
 async function init() {
     if (!lojistaId) return;
     if (modo === 'gourmet') document.body.classList.add('gourmet-mode');
@@ -56,15 +62,14 @@ async function carregarDadosEProdutos() {
 
         snap.forEach(d => {
             const p = d.data();
-            
             if (p.owner !== lojistaId) return;
             if (p.status === "pausado" || p.visivel === false) return; 
-            
             if (modo === 'gourmet' && p.categoria !== 'Comida') return;
             if (modo !== 'gourmet' && p.categoria === 'Comida') return;
 
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
             const imgCapa = otimizarURL(fotos[0], 1000);
+            const linkProduto = gerarLinkProduto(d.id);
 
             if (d.id === activeProductId) {
                 if (modo === 'gourmet') {
@@ -94,7 +99,7 @@ async function carregarDadosEProdutos() {
                                         <div style="font-size:13px; color:#666; margin-bottom:5px;">Tamanho</div>
                                         <div class="tamanho-grid">${['P','M','G','GG'].map(t => `<div class="btn-tamanho" onclick="selecionarTamanho(this, '${t}')">${t}</div>`).join('')}</div>
                                     </div>` : ''}
-                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
+                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${linkProduto}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
                             </div>
                         </div><hr style="border:0; border-top:8px solid #eee; margin:0;">`;
                 }
@@ -158,12 +163,10 @@ function renderizarModalConfig() {
         let total = parseFloat(itemAtualConfig.preco.toString().replace(',','.'));
         let detalhesPedido = [];
 
-        // 1. ADICIONA A DESCRIÇÃO DETALHADA (INGREDIENTES) DO PRODUTO SE EXISTIR
         if (itemAtualConfig.descricao && itemAtualConfig.id !== 'montar_global') {
             detalhesPedido.push(`Detalhes: ${itemAtualConfig.descricao}`);
         }
 
-        // 2. Captura variação
         const varSel = document.querySelector('input[name="variacao"]:checked');
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
@@ -171,7 +174,6 @@ function renderizarModalConfig() {
             detalhesPedido.push(`Opção: ${v.nome}`);
         }
 
-        // 3. Captura adicionais
         const adds = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
@@ -180,18 +182,16 @@ function renderizarModalConfig() {
         });
         if(adds.length > 0) detalhesPedido.push(`Adicionais: ${adds.join(', ')}`);
 
-        // 4. Observação
         const obs = document.getElementById('gourmet-obs').value;
         if(obs) detalhesPedido.push(`Obs: ${obs}`);
 
-        // Montagem do Nome Final para o WhatsApp
         let nomeFinalWhatsApp = itemAtualConfig.nome;
         if(detalhesPedido.length > 0) {
             nomeFinalWhatsApp += ` (${detalhesPedido.join(' | ')})`;
         }
 
         const precoFormatado = total.toFixed(2).replace('.', ',');
-        const fotoFinal = itemAtualConfig.foto ? (Array.isArray(itemAtualConfig.foto) ? itemAtualConfig.foto[0] : itemAtualConfig.foto) : lojistaInfoCache.fotoPerfilComida;
+        const linkProduto = gerarLinkProduto(itemAtualConfig.id);
 
         window.adicionarAoCarrinho(
             itemAtualConfig.id, 
@@ -199,10 +199,9 @@ function renderizarModalConfig() {
             precoFormatado, 
             itemAtualConfig.owner, 
             itemAtualConfig.whatsapp, 
-            otimizarURL(fotoFinal, 200)
+            linkProduto
         );
         
-        // Limpar observação para o próximo item
         document.getElementById('gourmet-obs').value = '';
         window.fecharModalComida();
     };
