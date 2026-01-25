@@ -67,14 +67,14 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP)
+// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP - FORMATO ATUALIZADO)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
 
     let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
-    texto += `------------------------------------------\n\n`;
+    texto += `────────────────────\n\n`;
     
     let total = 0;
     itensLoja.forEach((item) => {
@@ -82,22 +82,23 @@ window.finalizarGrupoLojista = (ownerId) => {
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
 
-        texto += `*PRODUTO:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
+        texto += `*🛍️ Produto:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
-        // DESCRIÇÃO REAL: Exibe apenas se houver conteúdo
         if (item.descricao && item.descricao.trim() !== "") {
-            texto += `*DESCRIÇÃO:* _${item.descricao}_\n`;
+            texto += `*📄 Descrição:* _${item.descricao}_\n`;
         }
         
-        texto += `*VALOR:* R$ ${item.preco}\n`;
+        texto += `*💰 Valor:* R$ ${item.preco}\n\n`;
         
         if (item.linkProduto) {
-            texto += `🔗 *VER PRODUTO:* ${item.linkProduto}\n`;
+            texto += `*🔗 Ver produto:*\n`;
+            texto += `👉 Toque para visualizar o item\n`;
+            texto += `${item.linkProduto}\n`;
         }
-        texto += `------------------------------------------\n`;
+        texto += `────────────────────\n`;
     });
 
-    texto += `\n*💰 TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    texto += `\n*💵 Total: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
     texto += `_Pedido gerado via catálogo online_\n`;
     texto += `*Pede Aí*`;
 
