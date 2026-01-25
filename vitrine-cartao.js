@@ -116,7 +116,7 @@ async function carregarDadosEProdutos() {
 
 window.abrirConfigComida = async (id, isGlobal = false) => {
     if (isGlobal) {
-        itemAtualConfig = { id: 'montar_global', nome: lojistaInfoCache.montarTitulo || "Personalizado", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfilComida, descricao: "" };
+        itemAtualConfig = { id: 'montar_global', nome: lojistaInfoCache.montarTitulo || "Personalizado", preco: "0,00", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfilComida, descricao: "" };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
         itemAtualConfig = { ...d.data(), id: d.id };
@@ -155,23 +155,50 @@ function renderizarModalConfig() {
     document.getElementById('overlayComida').style.display = 'block';
     
     document.getElementById('btnConfirmarConfig').onclick = () => {
-        let total = 0;
-        let nomeFinal = itemAtualConfig.nome;
+        // Preço base do produto ou 0 se for montar_global
+        let total = parseFloat(itemAtualConfig.preco.toString().replace(',','.'));
+        let detalhesTexto = [];
+
+        // Captura variação
         const varSel = document.querySelector('input[name="variacao"]:checked');
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
             total += parseFloat(v.preco.toString().replace(',','.'));
-            nomeFinal += ` (${v.nome})`;
+            detalhesTexto.push(`Opção: ${v.nome}`);
         }
+
+        // Captura adicionais
+        const adds = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
             total += parseFloat(a.preco.toString().replace(',','.'));
-            nomeFinal += ` + ${a.nome}`;
+            adds.push(a.nome);
         });
-        const obs = document.getElementById('gourmet-obs').value;
-        if(obs) nomeFinal += ` [Obs: ${obs}]`;
+        if(adds.length > 0) detalhesTexto.push(`Adicionais: ${adds.join(', ')}`);
 
-        window.adicionarAoCarrinho(itemAtualConfig.id, nomeFinal, total.toFixed(2).replace('.',','), itemAtualConfig.owner, itemAtualConfig.whatsapp, otimizarURL(itemAtualConfig.foto, 200));
+        // Observação
+        const obs = document.getElementById('gourmet-obs').value;
+        if(obs) detalhesTexto.push(`Obs: ${obs}`);
+
+        // Montagem da Descrição Profissional para o Carrinho/WhatsApp
+        // Ex: "X-Bacon (Opção: Bem passado) + Adicionais: Queijo, Ovo [Obs: Sem cebola]"
+        let nomeFinalWhatsApp = itemAtualConfig.nome;
+        if(detalhesTexto.length > 0) {
+            nomeFinalWhatsApp += ` (${detalhesTexto.join(' | ')})`;
+        }
+
+        const precoFormatado = total.toFixed(2).replace('.', ',');
+        const fotoFinal = itemAtualConfig.foto ? (Array.isArray(itemAtualConfig.foto) ? itemAtualConfig.foto[0] : itemAtualConfig.foto) : lojistaInfoCache.fotoPerfilComida;
+
+        window.adicionarAoCarrinho(
+            itemAtualConfig.id, 
+            nomeFinalWhatsApp, 
+            precoFormatado, 
+            itemAtualConfig.owner, 
+            itemAtualConfig.whatsapp, 
+            otimizarURL(fotoFinal, 200)
+        );
+        
         window.fecharModalComida();
     };
 }
