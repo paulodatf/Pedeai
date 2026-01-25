@@ -1,22 +1,18 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO (Ajustado para autocompletar link e descrição vindos do index)
+// 1. ADICIONAR AO CARRINHO (Ajustado para garantir Descrição e Link vindos do index)
 window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     
-    // AJUSTE CIRÚRGICO: Se não houver link (origem index.js), reconstrói o link da vitrine
+    // AJUSTE: Se não houver link (origem index.js), reconstrói o link da vitrine
     let linkFinal = linkProduto;
-    if (!linkFinal || linkFinal === 'undefined') {
+    if (!linkFinal || linkFinal === 'undefined' || linkFinal === '') {
         const base = window.location.origin + window.location.pathname.replace('index.html', 'vitrine-lojista.html');
-        // Mantém a consistência com o padrão do projeto
         linkFinal = `${base}?seller=${owner}&product=${id}&modo=produto`;
     }
 
-    // AJUSTE CIRÚRGICO: Garante uma descrição padrão caso venha vazia do index
-    let descricaoFinal = descricao;
-    if (!descricaoFinal || descricaoFinal.trim() === "") {
-        descricaoFinal = "Produto selecionado via catálogo.";
-    }
+    // AJUSTE: Se a descrição vier vazia (origem index.js), define um texto para o lojista
+    let descricaoFinal = (descricao && descricao.trim() !== "") ? descricao : "Item selecionado via catálogo principal.";
 
     const item = { 
         id, 
@@ -30,6 +26,7 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProd
         qtd: 1 
     };
 
+    // Busca item idêntico no carrinho para somar quantidade
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricaoFinal);
     
     if (index > -1) { 
@@ -70,7 +67,7 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (ENVIA LINK NO LUGAR DA IMAGEM)
+// 4. FINALIZAR PEDIDO (ENVIA LINK E DESCRIÇÃO NO WHATSAPP)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
@@ -87,6 +84,7 @@ window.finalizarGrupoLojista = (ownerId) => {
 
         texto += `*PRODUTO:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
+        // Garante que a descrição seja enviada
         if (item.descricao && item.descricao.trim() !== "") {
             texto += `*DESCRIÇÃO:* _${item.descricao}_\n`;
         }
@@ -114,7 +112,7 @@ window.finalizarGrupoLojista = (ownerId) => {
     window.open(urlFinal, '_blank');
 };
 
-// 5. INTERFACE E UI (MANTÉM MINI FOTINHA VISÍVEL)
+// 5. INTERFACE E UI
 window.atualizarIconeCarrinho = () => {
     const flutuante = document.getElementById('carrinho-flutuante');
     const contador = document.getElementById('cart-count') || document.getElementById('carrinho-count');
