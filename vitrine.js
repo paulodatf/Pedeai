@@ -85,18 +85,24 @@ export async function carregarVitrineCompleta() {
             if (p.status === "desativado" || p.visivel === false) return;
 
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
-            const imgCapa = otimizarURL(fotos[0] || "https://via.placeholder.com/300", 600);
+            const imgCapaRaw = fotos[0] || "https://via.placeholder.com/300";
+            const imgCapaOtimizada = otimizarURL(imgCapaRaw, 600);
             const linkProduto = gerarLinkVitrine(sellerId, d.id, modo);
             const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
             const descSanitizada = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
+            const nomeSanitizado = p.nome.replace(/'/g, "\\'");
 
+            // Funções de clique ajustadas para bater com a assinatura do carrinho.js:
+            // (id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao)
+            
             const funcAddDiretoGeral = `
                 (() => {
                     const id = '${d.id}';
-                    const nome = '${p.nome.replace(/'/g, "\\'")}';
+                    const nome = '${nomeSanitizado}';
                     const preco = '${p.preco}';
                     const owner = '${p.owner}';
                     const whatsapp = '${p.whatsapp}';
+                    const imagem = '${imgCapaRaw}';
                     const link = '${linkProduto}';
                     const tipo = '${p.tipoProduto || ""}';
                     const desc = '${descSanitizada}';
@@ -106,14 +112,14 @@ export async function carregarVitrineCompleta() {
                             alert('Por favor, selecione um tamanho antes de adicionar.');
                             return;
                         }
-                        window.adicionarAoCarrinho(id, nome + ' (Tam: ' + window.tamanhoSelecionadoAtual + ')', preco, owner, whatsapp, link, desc);
+                        window.adicionarAoCarrinho(id, nome + ' (Tam: ' + window.tamanhoSelecionadoAtual + ')', preco, owner, whatsapp, imagem, link, desc);
                     } else {
-                        window.adicionarAoCarrinho(id, nome, preco, owner, whatsapp, link, desc);
+                        window.adicionarAoCarrinho(id, nome, preco, owner, whatsapp, imagem, link, desc);
                     }
                 })()
             `;
 
-            const funcAddDiretoSimples = `window.adicionarAoCarrinho('${d.id}', '${p.nome.replace(/'/g, "\\'")}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${linkProduto}', '${descSanitizada}')`;
+            const funcAddDiretoSimples = `window.adicionarAoCarrinho('${d.id}', '${nomeSanitizado}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapaRaw}', '${linkProduto}', '${descSanitizada}')`;
             const funcAddConfig = `window.abrirConfigComida('${d.id}', false)`;
 
             if (p.categoria !== categoriaAtiva) return;
@@ -178,7 +184,7 @@ export async function carregarVitrineCompleta() {
             } else if (p.owner === sellerId) {
                 htmlGridLojista += `
                     <div class="card-menor" onclick="window.location.href='vitrine-lojista.html?seller=${sellerId}&product=${d.id}&modo=${modo}'" style="background: #fff; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #eee;">
-                        <img src="${otimizarURL(imgCapa, 300)}" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
+                        <img src="${otimizarURL(imgCapaOtimizada, 300)}" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
                         <div style="padding: 8px;">
                             <div style="font-size: 12px; color: #333; height: 32px; overflow: hidden; line-height: 1.3; margin-bottom: 4px;">${p.nome}</div>
                             <div style="font-weight: bold; color: #ee4d2d; font-size: 14px;">R$ ${p.preco}</div>
@@ -207,6 +213,12 @@ export async function carregarVitrineCompleta() {
     } catch (error) { console.error("Erro ao carregar vitrine:", error); }
 }
 
+window.selecionarTamanho = (btn, tamanho) => {
+    document.querySelectorAll('.btn-tamanho').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    window.tamanhoSelecionadoAtual = tamanho;
+};
+
 window.abrirConfigComida = async (id, isGlobal = false) => {
     const modal = document.getElementById('modalComida');
     const overlay = document.getElementById('overlayComida');
@@ -218,7 +230,7 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
 
     let configData = null;
     if (isGlobal) {
-        configData = { nome: lojistaInfoCache.montarTitulo || "Personalizar", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, descricao: "" };
+        configData = { nome: lojistaInfoCache.montarTitulo || "Personalizar", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfil || "", descricao: "" };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
         if (d.exists()) { configData = d.data(); configData.id = d.id; }
@@ -275,6 +287,9 @@ window.atualizarPrecoModal = () => {
         
         const descricaoFinal = (itemAtualConfig.descricao || "") + (resumoConfig ? " | Escolhas: " + resumoConfig : "");
         const linkProduto = gerarLinkVitrine(lojistaInfoCache.id, itemAtualConfig.id || 'montar_global', (new URLSearchParams(window.location.search)).get('modo') || 'produto');
+        
+        // Pega a imagem do produto ou da loja para a mini fotinha
+        const imgItem = Array.isArray(itemAtualConfig.foto) ? itemAtualConfig.foto[0] : itemAtualConfig.foto;
 
         window.adicionarAoCarrinho(
             itemAtualConfig.id || 'montar_global', 
@@ -282,6 +297,7 @@ window.atualizarPrecoModal = () => {
             total.toFixed(2).replace('.', ','), 
             itemAtualConfig.owner, 
             itemAtualConfig.whatsapp, 
+            imgItem || 'https://via.placeholder.com/100', 
             linkProduto, 
             descricaoFinal
         );

@@ -16,8 +16,8 @@ function otimizarURL(url, width = 400) {
     return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
 }
 
-// Função para gerar link direto do produto
-function gerarLinkProduto(prodId) {
+// Função para gerar link do produto destacado
+function gerarLinkDestaque(prodId) {
     const base = window.location.origin + window.location.pathname;
     return `${base}?seller=${lojistaId}&product=${prodId}&modo=${modo}`;
 }
@@ -69,7 +69,7 @@ async function carregarDadosEProdutos() {
 
             const fotos = Array.isArray(p.foto) ? p.foto : [p.foto];
             const imgCapa = otimizarURL(fotos[0], 1000);
-            const linkProduto = gerarLinkProduto(d.id);
+            const linkDestaque = gerarLinkDestaque(d.id);
 
             if (d.id === activeProductId) {
                 if (modo === 'gourmet') {
@@ -99,7 +99,7 @@ async function carregarDadosEProdutos() {
                                         <div style="font-size:13px; color:#666; margin-bottom:5px;">Tamanho</div>
                                         <div class="tamanho-grid">${['P','M','G','GG'].map(t => `<div class="btn-tamanho" onclick="selecionarTamanho(this, '${t}')">${t}</div>`).join('')}</div>
                                     </div>` : ''}
-                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${linkProduto}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
+                                <button onclick="window.adicionarAoCarrinho('${d.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${otimizarURL(fotos[0], 100)}', '${linkDestaque}')" class="btn-action-main" style="background:var(--orange);">Compre agora</button>
                             </div>
                         </div><hr style="border:0; border-top:8px solid #eee; margin:0;">`;
                 }
@@ -133,15 +133,6 @@ function renderizarModalConfig() {
     const content = document.getElementById('modalContent');
     document.getElementById('modalNome').innerText = itemAtualConfig.nome;
     
-    const descModal = document.getElementById('texto-descricao-gourmet');
-    const containerDesc = document.getElementById('container-desc-modal');
-    if (itemAtualConfig.descricao) {
-        descModal.innerText = itemAtualConfig.descricao;
-        containerDesc.style.display = 'block';
-    } else {
-        containerDesc.style.display = 'none';
-    }
-
     let html = '';
     if (itemAtualConfig.variacoes?.length > 0) {
         html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ESCOLHA UMA OPÇÃO:</div>`;
@@ -162,18 +153,12 @@ function renderizarModalConfig() {
     document.getElementById('btnConfirmarConfig').onclick = () => {
         let total = parseFloat(itemAtualConfig.preco.toString().replace(',','.'));
         let detalhesPedido = [];
-
-        if (itemAtualConfig.descricao && itemAtualConfig.id !== 'montar_global') {
-            detalhesPedido.push(`Detalhes: ${itemAtualConfig.descricao}`);
-        }
-
         const varSel = document.querySelector('input[name="variacao"]:checked');
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
             total += parseFloat(v.preco.toString().replace(',','.'));
             detalhesPedido.push(`Opção: ${v.nome}`);
         }
-
         const adds = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
@@ -181,17 +166,15 @@ function renderizarModalConfig() {
             adds.push(a.nome);
         });
         if(adds.length > 0) detalhesPedido.push(`Adicionais: ${adds.join(', ')}`);
-
         const obs = document.getElementById('gourmet-obs').value;
         if(obs) detalhesPedido.push(`Obs: ${obs}`);
 
         let nomeFinalWhatsApp = itemAtualConfig.nome;
-        if(detalhesPedido.length > 0) {
-            nomeFinalWhatsApp += ` (${detalhesPedido.join(' | ')})`;
-        }
+        if(detalhesPedido.length > 0) nomeFinalWhatsApp += ` (${detalhesPedido.join(' | ')})`;
 
         const precoFormatado = total.toFixed(2).replace('.', ',');
-        const linkProduto = gerarLinkProduto(itemAtualConfig.id);
+        const linkDestaque = gerarLinkDestaque(itemAtualConfig.id);
+        const fotoFinal = itemAtualConfig.foto ? (Array.isArray(itemAtualConfig.foto) ? itemAtualConfig.foto[0] : itemAtualConfig.foto) : lojistaInfoCache.fotoPerfilComida;
 
         window.adicionarAoCarrinho(
             itemAtualConfig.id, 
@@ -199,7 +182,8 @@ function renderizarModalConfig() {
             precoFormatado, 
             itemAtualConfig.owner, 
             itemAtualConfig.whatsapp, 
-            linkProduto
+            otimizarURL(fotoFinal, 100),
+            linkDestaque
         );
         
         document.getElementById('gourmet-obs').value = '';
