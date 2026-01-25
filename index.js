@@ -203,7 +203,6 @@ function renderizarProdutos() {
         if (modoAtual === 'products' && p.categoria !== 'Geral') return false;
         if (modoAtual === 'classifieds' && p.categoria !== 'Classificados') return false;
 
-        // BUSCA INTELIGENTE: PRODUTO + LOJISTA
         const termoBusca = normalizar(filtroTexto);
         const alvoBusca = normalizar(`${p.nome} ${p.nomeLoja} ${p.descricao || ''}`);
         
@@ -222,9 +221,14 @@ function renderizarProdutos() {
 
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
     grid.innerHTML = filtrados.map(p => {
-        const img = otimizarURL(p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/300", 400);
+        const imgRaw = p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/300";
+        const img = otimizarURL(imgRaw, 400);
         
-        // Template do Nome do Lojista (Reutilizável)
+        // Link dinâmico para garantir que o carrinho saiba de onde o produto veio
+        const linkProduto = `${window.location.origin}${window.location.pathname.replace('index.html', '')}vitrine-lojista.html?seller=${p.owner}&product=${p.id}&modo=${paramModo}`;
+        const nomeSanitizado = p.nome.replace(/'/g, "\\'");
+        const descSanitizada = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
+
         const lojistaTag = `<div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
             <i class="fas fa-store" style="font-size: 9px;"></i> ${p.nomeLoja}
         </div>`;
@@ -241,8 +245,10 @@ function renderizarProdutos() {
         } else {
             const isRoupa = p.tipoProduto === 'roupa';
             const temTamanhos = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) || (p.numeracoes && p.numeracoes.trim() !== "");
+            
+            // AJUSTE: Passando link e descrição (vazia ou real) para o carrinho
             let btnHTML = (isRoupa && temTamanhos) ? `<button class="btn-add-main">Escolher opções</button>` : 
-                `<button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${img}')">Adicionar</button>`;
+                `<button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${nomeSanitizado}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgRaw}', '${linkProduto}', '${descSanitizada}')">Adicionar</button>`;
             
             return `<div class="product-card" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')">
                     <div class="img-box"><img src="${img}" loading="lazy"></div>

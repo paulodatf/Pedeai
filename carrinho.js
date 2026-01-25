@@ -1,21 +1,18 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO (Ajuste cirúrgico para preservação de descrição e links)
+// 1. ADICIONAR AO CARRINHO (Ajustado para integridade total da descrição real)
 window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     
-    // AJUSTE: Se não houver link (origem index.js), reconstrói o link da vitrine
+    // Reconstrói o link da vitrine caso venha vazio
     let linkFinal = linkProduto;
     if (!linkFinal || linkFinal === 'undefined' || linkFinal === '') {
         const base = window.location.origin + window.location.pathname.replace('index.html', 'vitrine-lojista.html');
         linkFinal = `${base}?seller=${owner}&product=${id}&modo=produto`;
     }
 
-    // AJUSTE: Se a descrição vier vazia (index.js), usamos um fallback amigável.
-    // Se vier preenchida (vitrine.js), ela é mantida integralmente.
-    let descricaoFinal = (descricao && descricao.trim() !== "" && descricao !== "undefined") 
-        ? descricao 
-        : "Confira os detalhes no link do produto.";
+    // REGRA: Captura a descrição real. Se vier "undefined" ou nulo, fica vazio (string limpa).
+    let descricaoFinal = (descricao && descricao !== "undefined") ? descricao : "";
 
     const item = { 
         id, 
@@ -29,7 +26,7 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProd
         qtd: 1 
     };
 
-    // Busca item idêntico no carrinho
+    // Busca item idêntico no carrinho (incluindo descrição na comparação para itens personalizados)
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricaoFinal);
     
     if (index > -1) { 
@@ -70,7 +67,7 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP COM TODOS OS DADOS)
+// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
@@ -87,7 +84,7 @@ window.finalizarGrupoLojista = (ownerId) => {
 
         texto += `*PRODUTO:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
-        // ENVIO DA DESCRIÇÃO: Crucial para o lojista identificar o produto
+        // DESCRIÇÃO REAL: Exibe apenas se houver conteúdo
         if (item.descricao && item.descricao.trim() !== "") {
             texto += `*DESCRIÇÃO:* _${item.descricao}_\n`;
         }
