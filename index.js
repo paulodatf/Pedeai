@@ -47,7 +47,7 @@ const CHIPS_POR_MODO = {
 };
 
 function normalizar(texto) {
-    return texto ? texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
+    return texto ? texto.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
 }
 
 function aplicarAlgoritmoVisibilidade(lista) {
@@ -87,13 +87,13 @@ async function inicializar() {
             const data = d.data();
             if(data.promocao === 'sim' && data.promoExpira && Date.now() > data.promoExpira) data.promocao = 'nao';
             
-            // Injeta dados de permissão baseados no config.js
             const lojista = dadosLojistas[data.owner];
             const regras = GetRegrasLojista(lojista);
 
             todosProdutos.push({ 
                 id: d.id, 
                 ...data, 
+                nomeLoja: lojista?.nomeLoja || 'Loja Parceira',
                 planoLojista: lojista?.planoAtivo || 'basico',
                 isLojistaAprovado: regras.podeExibirProdutos,
                 isProdutoAtivo: data.status !== 'inativo' && data.visivel !== false
@@ -136,7 +136,6 @@ function renderizarCarrosselAutomatico() {
     if (!track) return;
     const categoriaFirebase = modoAtual === 'restaurants' ? 'Comida' : (modoAtual === 'classifieds' ? 'Classificados' : 'Geral');
     
-    // Aplica as mesmas regras de visibilidade no carrossel Turbo
     const poolTurbo = todosProdutos.filter(p => 
         p.turbo === 'sim' && 
         p.categoria === categoriaFirebase &&
@@ -197,19 +196,24 @@ function renderizarProdutos() {
     if (!grid) return;
     
     let filtrados = todosProdutos.filter(p => {
-        // REGRAS DE BLOQUEIO DO CONFIG.JS (FILTRAGEM CIRÚRGICA)
         if (!p.isLojistaAprovado) return false;
         if (!p.isProdutoAtivo) return false;
 
         if (modoAtual === 'restaurants' && p.categoria !== 'Comida') return false;
         if (modoAtual === 'products' && p.categoria !== 'Geral') return false;
         if (modoAtual === 'classifieds' && p.categoria !== 'Classificados') return false;
-        const textoCard = normalizar(`${p.nome} ${p.descricao || ''}`);
-        if (filtroTexto && !textoCard.includes(normalizar(filtroTexto))) return false;
+
+        // BUSCA INTELIGENTE: PRODUTO + LOJISTA
+        const termoBusca = normalizar(filtroTexto);
+        const alvoBusca = normalizar(`${p.nome} ${p.nomeLoja} ${p.descricao || ''}`);
+        
+        if (filtroTexto && !alvoBusca.includes(termoBusca)) return false;
+
         if (filtroChip === 'promocao') return p.promocao === 'sim';
         if (filtroChip && filtroChip !== '') {
             const keywords = MAPAS_FILTROS[modoAtual][filtroChip] || [];
-            if (!keywords.some(k => textoCard.includes(normalizar(k))) && !textoCard.includes(normalizar(filtroChip))) return false;
+            const textoCardFiltro = normalizar(`${p.nome} ${p.descricao || ''}`);
+            if (!keywords.some(k => textoCardFiltro.includes(normalizar(k))) && !textoCardFiltro.includes(normalizar(filtroChip))) return false;
         }
         return true;
     });
@@ -219,19 +223,35 @@ function renderizarProdutos() {
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
     grid.innerHTML = filtrados.map(p => {
         const img = otimizarURL(p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/300", 400);
+        
+        // Template do Nome do Lojista (Reutilizável)
+        const lojistaTag = `<div style="font-size: 10px; color: var(--text-muted); margin-bottom: 4px; display: flex; align-items: center; gap: 4px;">
+            <i class="fas fa-store" style="font-size: 9px;"></i> ${p.nomeLoja}
+        </div>`;
+
         if (modoAtual === 'restaurants') {
             return `<div class="gourmet-card" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')">
                     <div class="gourmet-img-box"><img src="${img}" loading="lazy"></div>
-                    <div class="gourmet-body"><div class="gourmet-name">${p.nome}</div><div class="gourmet-price">R$ ${p.preco}</div></div>
+                    <div class="gourmet-body">
+                        ${lojistaTag}
+                        <div class="gourmet-name">${p.nome}</div>
+                        <div class="gourmet-price">R$ ${p.preco}</div>
+                    </div>
                 </div>`;
         } else {
             const isRoupa = p.tipoProduto === 'roupa';
             const temTamanhos = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) || (p.numeracoes && p.numeracoes.trim() !== "");
             let btnHTML = (isRoupa && temTamanhos) ? `<button class="btn-add-main">Escolher opções</button>` : 
                 `<button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${p.nome}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${img}')">Adicionar</button>`;
+            
             return `<div class="product-card" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')">
                     <div class="img-box"><img src="${img}" loading="lazy"></div>
-                    <div class="card-body"><div class="p-name">${p.nome}</div><div class="p-price">R$ ${p.preco}</div>${btnHTML}</div>
+                    <div class="card-body">
+                        ${lojistaTag}
+                        <div class="p-name">${p.nome}</div>
+                        <div class="p-price">R$ ${p.preco}</div>
+                        ${btnHTML}
+                    </div>
                 </div>`;
         }
     }).join('');
