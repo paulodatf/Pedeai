@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO (Ajustado para garantir Descrição e Link vindos do index)
+// 1. ADICIONAR AO CARRINHO (Ajuste cirúrgico para preservação de descrição e links)
 window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     
@@ -11,8 +11,11 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProd
         linkFinal = `${base}?seller=${owner}&product=${id}&modo=produto`;
     }
 
-    // AJUSTE: Se a descrição vier vazia (origem index.js), define um texto para o lojista
-    let descricaoFinal = (descricao && descricao.trim() !== "") ? descricao : "Item selecionado via catálogo principal.";
+    // AJUSTE: Se a descrição vier vazia (index.js), usamos um fallback amigável.
+    // Se vier preenchida (vitrine.js), ela é mantida integralmente.
+    let descricaoFinal = (descricao && descricao.trim() !== "" && descricao !== "undefined") 
+        ? descricao 
+        : "Confira os detalhes no link do produto.";
 
     const item = { 
         id, 
@@ -26,7 +29,7 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProd
         qtd: 1 
     };
 
-    // Busca item idêntico no carrinho para somar quantidade
+    // Busca item idêntico no carrinho
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricaoFinal);
     
     if (index > -1) { 
@@ -67,7 +70,7 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (ENVIA LINK E DESCRIÇÃO NO WHATSAPP)
+// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP COM TODOS OS DADOS)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
@@ -84,7 +87,7 @@ window.finalizarGrupoLojista = (ownerId) => {
 
         texto += `*PRODUTO:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
-        // Garante que a descrição seja enviada
+        // ENVIO DA DESCRIÇÃO: Crucial para o lojista identificar o produto
         if (item.descricao && item.descricao.trim() !== "") {
             texto += `*DESCRIÇÃO:* _${item.descricao}_\n`;
         }
