@@ -90,6 +90,8 @@ export async function carregarVitrineCompleta() {
             const imgCapa = otimizarURL(fotos[0] || "https://via.placeholder.com/300", 600);
             const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
             
+            const descSanitizada = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
+
             const funcAddDiretoGeral = `
                 (() => {
                     const id = '${d.id}';
@@ -99,20 +101,21 @@ export async function carregarVitrineCompleta() {
                     const whatsapp = '${p.whatsapp}';
                     const img = '${imgCapa}';
                     const tipo = '${p.tipoProduto || ""}';
+                    const desc = '${descSanitizada}';
                     
                     if(tipo === 'roupa') {
                         if(!window.tamanhoSelecionadoAtual) {
                             alert('Por favor, selecione um tamanho antes de adicionar.');
                             return;
                         }
-                        window.adicionarAoCarrinho(id, nome + ' (Tam: ' + window.tamanhoSelecionadoAtual + ')', preco, owner, whatsapp, img);
+                        window.adicionarAoCarrinho(id, nome + ' (Tam: ' + window.tamanhoSelecionadoAtual + ')', preco, owner, whatsapp, img, desc);
                     } else {
-                        window.adicionarAoCarrinho(id, nome, preco, owner, whatsapp, img);
+                        window.adicionarAoCarrinho(id, nome, preco, owner, whatsapp, img, desc);
                     }
                 })()
             `;
 
-            const funcAddDiretoSimples = `window.adicionarAoCarrinho('${d.id}', '${p.nome.replace(/'/g, "\\'")}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}')`;
+            const funcAddDiretoSimples = `window.adicionarAoCarrinho('${d.id}', '${p.nome.replace(/'/g, "\\'")}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgCapa}', '${descSanitizada}')`;
             const funcAddConfig = `window.abrirConfigComida('${d.id}', false)`;
 
             if (p.categoria !== categoriaAtiva) return;
@@ -305,14 +308,35 @@ window.atualizarPrecoModal = () => {
     document.getElementById('btnConfirmarConfig').innerText = `ADICIONAR R$ ${total.toFixed(2).replace('.', ',')}`;
     document.getElementById('btnConfirmarConfig').onclick = () => {
         let nomeFinal = itemAtualConfig.nome;
-        if(varSelected) nomeFinal += ` (${itemAtualConfig.variacoes[varSelected.value].nome})`;
+        let resumoConfig = "";
+        
+        if(varSelected) resumoConfig += ` (${itemAtualConfig.variacoes[varSelected.value].nome})`;
+        
         let extras = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => { extras.push(itemAtualConfig.adicionais[cb.value].nome); });
-        if(extras.length > 0) nomeFinal += itemAtualConfig.isMontarGlobal ? ` [Montagem: ${extras.join(', ')}]` : ` + ${extras.join(', ')}`;
+        
+        if(extras.length > 0) {
+            resumoConfig += itemAtualConfig.isMontarGlobal ? ` [Montagem: ${extras.join(', ')}]` : ` + ${extras.join(', ')}`;
+        }
+        
         const obs = document.getElementById('gourmet-obs') ? document.getElementById('gourmet-obs').value : "";
-        if(obs) nomeFinal += ` [Obs: ${obs}]`;
+        if(obs) resumoConfig += ` [Obs: ${obs}]`;
+        
+        // A descrição detalhada agora combina a descrição original + as escolhas do modal
+        const descricaoFinal = (itemAtualConfig.descricao || "") + (resumoConfig ? " | Escolhas: " + resumoConfig : "");
+        
         const img = otimizarURL(itemAtualConfig.foto || (itemAtualConfig.fotos && itemAtualConfig.fotos[0]) || "", 300);
-        window.adicionarAoCarrinho(itemAtualConfig.id || 'montar_global', nomeFinal, total.toFixed(2).replace('.', ','), itemAtualConfig.owner, itemAtualConfig.whatsapp, img, itemAtualConfig.descricao || "");
+        
+        window.adicionarAoCarrinho(
+            itemAtualConfig.id || 'montar_global', 
+            nomeFinal, 
+            total.toFixed(2).replace('.', ','), 
+            itemAtualConfig.owner, 
+            itemAtualConfig.whatsapp, 
+            img, 
+            descricaoFinal
+        );
+        
         document.getElementById('modalComida').classList.remove('active');
         document.getElementById('overlayComida').style.display = 'none';
     };
