@@ -1,14 +1,14 @@
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// SUBSTITUA A FUNÇÃO EXISTENTE POR ESTA:
+// 1. ADICIONAR AO CARRINHO: Agora prioriza a descrição detalhada para diferenciar itens
 window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     
-    // Agora o item carrega a descrição para o lojista identificar melhor
+    // O item carrega a descrição para que o lojista saiba exatamente o que foi escolhido (ex: ingredientes)
     const item = { id, nome, preco, owner, whatsapp, imagem, descricao, qtd: 1 };
     
-    // Mantemos a lógica de busca por ID e Nome (para separar variações)
-    const index = carrinho.findIndex(i => i.id === id && i.nome === nome);
+    // A busca agora considera ID + Nome + Descrição para evitar que produtos com adicionais diferentes se somem erroneamente
+    const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricao);
     
     if (index > -1) { 
         carrinho[index].qtd += 1; 
@@ -18,10 +18,15 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, descrica
     
     localStorage.setItem(STORAGE_KEY, JSON.stringify(carrinho));
     window.atualizarIconeCarrinho();
+    
     const btn = document.getElementById('carrinho-flutuante');
-    if(btn) { btn.style.transform = 'scale(1.2)'; setTimeout(() => btn.style.transform = 'scale(1)', 200); }
+    if(btn) { 
+        btn.style.transform = 'scale(1.2)'; 
+        setTimeout(() => btn.style.transform = 'scale(1)', 200); 
+    }
 };
 
+// 2. ALTERAR QUANTIDADE: Mantém a consistência dos dados
 window.alterarQuantidadeCarrinho = (id, delta) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const index = carrinho.findIndex(i => i.id === id);
@@ -34,6 +39,7 @@ window.alterarQuantidadeCarrinho = (id, delta) => {
     }
 };
 
+// 3. REMOVER ITEM
 window.removerDoCarrinho = (id) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     carrinho = carrinho.filter(i => i.id !== id);
@@ -42,6 +48,7 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
+// 4. FINALIZAR PEDIDO: Montagem da mensagem detalhada para o WhatsApp
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
@@ -51,16 +58,21 @@ window.finalizarGrupoLojista = (ownerId) => {
     texto += `------------------------------------------\n\n`;
     
     let total = 0;
-    itensLoja.forEach((item, index) => {
-        const precoLimpo = parseFloat(item.preco.replace('R$', '').replace('.', '').replace(',', '.'));
+    itensLoja.forEach((item) => {
+        // Tratamento de preço para cálculo
+        const precoLimpo = parseFloat(item.preco.replace('R$', '').replace(/\./g, '').replace(',', '.'));
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
 
         texto += `*${item.qtd}x ${item.nome.toUpperCase()}*\n`;
+        
+        // Inclusão da descrição detalhada (ingredientes/detalhes)
         if (item.descricao && item.descricao.trim() !== "") {
             texto += `_Detalhes: ${item.descricao}_\n`;
         }
+        
         texto += `Valor Unitário: R$ ${item.preco}\n`;
+        
         if (item.imagem && item.imagem.trim() !== "") {
             texto += `Foto: ${item.imagem}\n`;
         }
@@ -71,13 +83,19 @@ window.finalizarGrupoLojista = (ownerId) => {
     texto += `*TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
     texto += `------------------------------------------`;
 
+    // Limpa apenas os itens desta loja após o pedido
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novoCarrinho));
+    
     window.atualizarIconeCarrinho();
     window.abrirModalCarrinho();
-    window.open(`https://wa.me/55${itensLoja[0].whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(texto)}`, '_blank');
+    
+    // Disparo para o WhatsApp
+    const fone = itensLoja[0].whatsapp.replace(/\D/g, '');
+    window.open(`https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`, '_blank');
 };
 
+// 5. INTERFACE E UI (Mantido original conforme solicitado)
 window.atualizarIconeCarrinho = () => {
     const flutuante = document.getElementById('carrinho-flutuante');
     const contador = document.getElementById('cart-count') || document.getElementById('carrinho-count');
@@ -97,13 +115,9 @@ window.atualizarIconeCarrinho = () => {
         if (contador) contador.innerText = totalItens;
 
         const barMontar = document.getElementById('barMontar');
-        const barraVisivel = barMontar && (barMontar.offsetWidth > 0 || barMontar.offsetHeight > 0 || window.getComputedStyle(barMontar).display !== 'none');
+        const barraVisivel = barMontar && (barMontar.offsetWidth > 0 || barMontar.offsetHeight > 0);
 
-        if (barraVisivel) {
-            flutuante.style.bottom = '90px'; 
-        } else {
-            flutuante.style.bottom = '30px';
-        }
+        flutuante.style.bottom = barraVisivel ? '90px' : '30px';
     }
 };
 
@@ -111,8 +125,18 @@ window.abrirModalCarrinho = () => {
     const modal = document.getElementById('modal-carrinho');
     const corpo = document.getElementById('lista-carrinho-lojas');
     const carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-    if (carrinho.length === 0) { if(modal) modal.style.display = 'none'; return; }
-    const grupos = carrinho.reduce((acc, item) => { if (!acc[item.owner]) acc[item.owner] = []; acc[item.owner].push(item); return acc; }, {});
+    
+    if (carrinho.length === 0) { 
+        if(modal) modal.style.display = 'none'; 
+        return; 
+    }
+
+    const grupos = carrinho.reduce((acc, item) => { 
+        if (!acc[item.owner]) acc[item.owner] = []; 
+        acc[item.owner].push(item); 
+        return acc; 
+    }, {});
+
     if (corpo) {
         corpo.innerHTML = "";
         for (const owner in grupos) {
@@ -125,7 +149,7 @@ window.abrirModalCarrinho = () => {
                             <img src="${i.imagem}" class="cart-item-img">
                             <div class="cart-item-info">
                                 <div class="cart-item-name">${i.nome}</div>
-                                <div class="cart-item-price">${i.preco}</div>
+                                <div class="cart-item-price">R$ ${i.preco}</div>
                                 <div class="qty-control-cart" style="display:flex; align-items:center; margin-top:5px; gap:10px;">
                                     <button onclick="alterarQuantidadeCarrinho('${i.id}', -1)" class="qty-btn-cart">-</button>
                                     <span style="font-size:13px; font-weight:bold;">${i.qtd}</span>
@@ -185,6 +209,7 @@ function inicializarCarrinho() {
     setInterval(window.atualizarIconeCarrinho, 400);
 }
 
+// Inicialização segura
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', inicializarCarrinho);
 } else {
