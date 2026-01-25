@@ -44,15 +44,15 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (AJUSTE PROFISSIONAL DE MENSAGEM)
+// 4. FINALIZAR PEDIDO (MENSAGEM PROFISSIONAL OTIMIZADA)
 window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
 
-    // Cabeçalho elegante
+    // Cabeçalho Profissional
     let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
-    texto += `_________________________________\n\n`;
+    texto += `------------------------------------------\n\n`;
     
     let total = 0;
     itensLoja.forEach((item) => {
@@ -60,28 +60,26 @@ window.finalizarGrupoLojista = (ownerId) => {
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
 
-        texto += `*item:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
+        texto += `*PRODUTO:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
-        // Descrição/Ingredientes com destaque visual
         if (item.descricao && item.descricao.trim() !== "") {
-            texto += `*obs:* _${item.descricao}_\n`;
+            texto += `*DESCRIÇÃO:* _${item.descricao}_\n`;
         }
         
-        texto += `*valor:* R$ ${item.preco}\n`;
+        texto += `*VALOR:* R$ ${item.preco}\n`;
         
-        // Link de imagem curto (Otimização para Cloudinary se disponível)
+        // Formatação de Link de Imagem Elegante
         if (item.imagem && item.imagem.trim() !== "") {
-            // Tenta reduzir a URL do Cloudinary removendo parâmetros desnecessários ou forçando redimensionamento via URL
+            // Remove parâmetros de query longos para manter o link mais curto
             const urlCurta = item.imagem.split('?')[0]; 
-            texto += `🔗 _Foto: ${urlCurta}_\n`;
+            texto += `📸 *FOTO:* ${urlCurta}\n`;
         }
-        texto += `\n`;
+        texto += `------------------------------------------\n`;
     });
 
-    texto += `_________________________________\n`;
-    texto += `*💰 TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n`;
-    texto += `_________________________________\n\n`;
-    texto += `*Pede Aí* - _Pedido gerado via catálogo_`;
+    texto += `\n*💰 TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    texto += `_Pedido gerado via catálogo online_\n`;
+    texto += `*Pede Aí*`;
 
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novoCarrinho));
@@ -90,7 +88,8 @@ window.finalizarGrupoLojista = (ownerId) => {
     window.abrirModalCarrinho();
     
     const fone = itensLoja[0].whatsapp.replace(/\D/g, '');
-    window.open(`https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`, '_blank');
+    const urlFinal = `https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`;
+    window.open(urlFinal, '_blank');
 };
 
 // 5. INTERFACE E UI
