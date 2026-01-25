@@ -1,9 +1,14 @@
+import { db } from './config.js';
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
 const STORAGE_KEY = 'carrinho_pedeai';
 
-// 1. ADICIONAR AO CARRINHO (Mantém imagem para UI e link para WhatsApp)
+// 1. ADICIONAR AO CARRINHO
 window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao = "") => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const item = { id, nome, preco, owner, whatsapp, imagem, linkProduto, descricao, qtd: 1 };
+    
+    // Busca exata para evitar duplicados com descrições diferentes (ex: tamanhos de roupa)
     const index = carrinho.findIndex(i => i.id === id && i.nome === nome && i.descricao === descricao);
     
     if (index > -1) { 
@@ -44,8 +49,8 @@ window.removerDoCarrinho = (id) => {
     window.abrirModalCarrinho();
 };
 
-// 4. FINALIZAR PEDIDO (ENVIA LINK NO LUGAR DA IMAGEM)
-window.finalizarGrupoLojista = (ownerId) => {
+// 4. FINALIZAR PEDIDO (RECUPERA DESCRIÇÃO SE ESTIVER VAZIA)
+window.finalizarGrupoLojista = async (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
@@ -54,15 +59,32 @@ window.finalizarGrupoLojista = (ownerId) => {
     texto += `------------------------------------------\n\n`;
     
     let total = 0;
-    itensLoja.forEach((item) => {
+
+    // Loop assíncrono para garantir que as descrições faltantes sejam buscadas
+    for (const item of itensLoja) {
         const precoLimpo = parseFloat(item.preco.replace('R$', '').replace(/\./g, '').replace(',', '.'));
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
 
+        let descricaoParaEnvio = item.descricao;
+
+        // SE NÃO HÁ DESCRIÇÃO (Vindo do index.js), BUSCA NO FIREBASE
+        if (!descricaoParaEnvio || descricaoParaEnvio.trim() === "") {
+            try {
+                const docRef = doc(db, "produtos", item.id);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    descricaoParaEnvio = docSnap.data().descricao || "";
+                }
+            } catch (error) {
+                console.error("Erro ao recuperar descrição extra:", error);
+            }
+        }
+
         texto += `*PRODUTO:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
         
-        if (item.descricao && item.descricao.trim() !== "") {
-            texto += `*DESCRIÇÃO:* _${item.descricao}_\n`;
+        if (descricaoParaEnvio && descricaoParaEnvio.trim() !== "") {
+            texto += `*DESCRIÇÃO:* _${descricaoParaEnvio}_\n`;
         }
         
         texto += `*VALOR:* R$ ${item.preco}\n`;
@@ -71,12 +93,13 @@ window.finalizarGrupoLojista = (ownerId) => {
             texto += `🔗 *VER PRODUTO:* ${item.linkProduto}\n`;
         }
         texto += `------------------------------------------\n`;
-    });
+    }
 
     texto += `\n*💰 TOTAL DO PEDIDO: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
     texto += `_Pedido gerado via catálogo online_\n`;
     texto += `*Pede Aí*`;
 
+    // Limpa apenas os itens desta loja do carrinho
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novoCarrinho));
     
@@ -88,7 +111,7 @@ window.finalizarGrupoLojista = (ownerId) => {
     window.open(urlFinal, '_blank');
 };
 
-// 5. INTERFACE E UI (MANTÉM MINI FOTINHA VISÍVEL)
+// 5. INTERFACE E UI (MANTÉM MINI FOTINHA)
 window.atualizarIconeCarrinho = () => {
     const flutuante = document.getElementById('carrinho-flutuante');
     const contador = document.getElementById('cart-count') || document.getElementById('carrinho-count');
