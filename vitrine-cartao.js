@@ -155,36 +155,39 @@ function renderizarModalConfig() {
     document.getElementById('overlayComida').style.display = 'block';
     
     document.getElementById('btnConfirmarConfig').onclick = () => {
-        // Preço base do produto ou 0 se for montar_global
         let total = parseFloat(itemAtualConfig.preco.toString().replace(',','.'));
-        let detalhesTexto = [];
+        let detalhesPedido = [];
 
-        // Captura variação
+        // 1. ADICIONA A DESCRIÇÃO DETALHADA (INGREDIENTES) DO PRODUTO SE EXISTIR
+        if (itemAtualConfig.descricao && itemAtualConfig.id !== 'montar_global') {
+            detalhesPedido.push(`Detalhes: ${itemAtualConfig.descricao}`);
+        }
+
+        // 2. Captura variação
         const varSel = document.querySelector('input[name="variacao"]:checked');
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
             total += parseFloat(v.preco.toString().replace(',','.'));
-            detalhesTexto.push(`Opção: ${v.nome}`);
+            detalhesPedido.push(`Opção: ${v.nome}`);
         }
 
-        // Captura adicionais
+        // 3. Captura adicionais
         const adds = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
             total += parseFloat(a.preco.toString().replace(',','.'));
             adds.push(a.nome);
         });
-        if(adds.length > 0) detalhesTexto.push(`Adicionais: ${adds.join(', ')}`);
+        if(adds.length > 0) detalhesPedido.push(`Adicionais: ${adds.join(', ')}`);
 
-        // Observação
+        // 4. Observação
         const obs = document.getElementById('gourmet-obs').value;
-        if(obs) detalhesTexto.push(`Obs: ${obs}`);
+        if(obs) detalhesPedido.push(`Obs: ${obs}`);
 
-        // Montagem da Descrição Profissional para o Carrinho/WhatsApp
-        // Ex: "X-Bacon (Opção: Bem passado) + Adicionais: Queijo, Ovo [Obs: Sem cebola]"
+        // Montagem do Nome Final para o WhatsApp
         let nomeFinalWhatsApp = itemAtualConfig.nome;
-        if(detalhesTexto.length > 0) {
-            nomeFinalWhatsApp += ` (${detalhesTexto.join(' | ')})`;
+        if(detalhesPedido.length > 0) {
+            nomeFinalWhatsApp += ` (${detalhesPedido.join(' | ')})`;
         }
 
         const precoFormatado = total.toFixed(2).replace('.', ',');
@@ -199,6 +202,8 @@ function renderizarModalConfig() {
             otimizarURL(fotoFinal, 200)
         );
         
+        // Limpar observação para o próximo item
+        document.getElementById('gourmet-obs').value = '';
         window.fecharModalComida();
     };
 }
