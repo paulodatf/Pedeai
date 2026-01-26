@@ -471,51 +471,29 @@ window.prepararLink = function(modo) {
     window.scrollTo({ top: area.offsetTop - 150, behavior: 'smooth' });
 };
 
+// Função para copiar para a área de transferência
 window.copiarLinkBotao = function() {
     const input = document.getElementById('inputLinkCopia');
-    const feedback = document.getElementById('feedback-copia');
-    const link = input.value;
+    const linkCopiado = input.value;
     
-    // Identifica o modo para personalizar a mensagem
-    const isGourmet = link.includes('modo=gourmet');
+    input.select();
+    input.setSelectionRange(0, 99999); 
+
+    // Identifica o modo através da URL contida no input
+    const isCardapio = linkCopiado.includes('modo=gourmet');
     
-    // Ajuste 2: Define o texto que vai para o WhatsApp/Instagram
-    let textoParaCopiar = "";
-    let mensagemVisual = "";
+    // Define a mensagem personalizada
+    const mensagem = isCardapio 
+        ? "🍔🍕🍣 Link do Cardápio copiado! Pronto para enviar aos clientes."
+        : "🛍️🛒 Link da Vitrine copiado! Pronto para turbinar suas vendas.";
 
-    if (isGourmet) {
-        textoParaCopiar = `Aqui está nosso cardápio digital.\nConfira os itens e faça seu pedido.\n${link}`;
-        mensagemVisual = "Link do CARDÁPIO DIGITAL copiado com sucesso!<br><span style='font-weight:normal; font-size:12px;'>Agora é só colar no WhatsApp ou Instagram.</span>";
-        feedback.style.background = "#fff5f2";
-        feedback.style.color = "#ee4d2d";
-        feedback.style.border = "1px solid #ee4d2d";
-    } else {
-        textoParaCopiar = `Aqui está nossa vitrine online.\nVeja nossos produtos disponíveis.\n${link}`;
-        mensagemVisual = "Link da VITRINE ONLINE copiado com sucesso!<br><span style='font-weight:normal; font-size:12px;'>Agora é só colar no WhatsApp ou Instagram.</span>";
-        feedback.style.background = "#f0f9ff";
-        feedback.style.color = "#007bff";
-        feedback.style.border = "1px solid #007bff";
-    }
-
-    // Copia o texto formatado para a área de transferência
     try {
-        navigator.clipboard.writeText(textoParaCopiar).then(() => {
-            // Ajuste 1: Exibe a mensagem visual na tela
-            feedback.innerHTML = mensagemVisual;
-            feedback.style.display = 'block';
-            
-            // Esconde a mensagem após 4 segundos
-            setTimeout(() => {
-                feedback.style.display = 'none';
-            }, 4000);
-        });
+        navigator.clipboard.writeText(linkCopiado);
+        alert(mensagem);
     } catch (err) {
-        // Fallback para dispositivos incompatíveis com navigator.clipboard
-        input.value = textoParaCopiar;
-        input.select();
+        // Fallback para navegadores que não suportam navigator.clipboard
         document.execCommand('copy');
-        input.value = link; // Volta o input para o link original
-        alert("Link copiado!");
+        alert(mensagem);
     }
 };
 
