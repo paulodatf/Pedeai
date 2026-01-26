@@ -218,20 +218,27 @@
         }
     };
 
-    window.salvarZapSuporte = () => {
-        const input = document.getElementById('inputZapSuporte');
-        const num = input.value.replace(/\D/g, ''); 
-        if(num.length < 10) return alert("Número inválido! Use o formato: 5511999999999");
-        
-        localStorage.setItem('zapSuporteGeral', num);
-        alert("Número de suporte atualizado com sucesso!");
-        location.reload(); 
-    };
-
-    const campoSuporte = document.getElementById('inputZapSuporte');
-    if (campoSuporte) {
-        campoSuporte.value = localStorage.getItem('zapSuporteGeral') || "";
+    window.salvarZapSuporte = async () => {
+    const input = document.getElementById('inputZapSuporte');
+    const num = input.value.replace(/\D/g, ''); 
+    if(num.length < 10) return alert("Número inválido!");
+    
+    try {
+        // Isso salva no banco de dados. Você nunca precisará abrir o Firebase manualmente.
+        const { doc, setDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+        await setDoc(doc(db, "configuracoes", "suporte"), { numero: num }, { merge: true });
+        alert("Número de suporte atualizado GLOBALMENTE!");
+    } catch (e) {
+        alert("Erro ao salvar. Verifique sua conexão.");
     }
+};
+
+// Carrega o número atual do banco assim que você abre o Admin
+(async () => {
+    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+    const docSnap = await getDoc(doc(db, "configuracoes", "suporte"));
+    if (docSnap.exists()) document.getElementById('inputZapSuporte').value = docSnap.data().numero;
+})();
 </script>
 </body>
 </html>

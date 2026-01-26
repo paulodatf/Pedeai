@@ -525,23 +525,23 @@ window.gerarLinkCartaoVisita = function(modo) {
     const urlBase = window.location.origin + window.location.pathname.replace('painel-lojista.html', 'vitrine-cartao.html');
     return `${urlBase}?lojista=${userId}&modo=${modo}`;
 };
-// AJUSTE DINÂMICO DE SUPORTE
-window.abrirSuporteDinamico = function() {
-    // Busca o número atualizado que o admin salvou no localStorage
-    const numeroSuporte = localStorage.getItem('zapSuporteGeral') || "5511999999999";
+// AJUSTE CIRÚRGICO: Função de Suporte Global via Firebase
+window.abrirSuporteDinamico = async function() {
+    let numeroSuporte = "5511999999999"; // Número padrão caso o banco falhe
     
-    // Limpa o número (remove espaços, parênteses, etc)
+    try {
+        // Busca o número que o Admin salvou no Firebase
+        const docRef = doc(db, "configuracoes", "suporte");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists() && docSnap.data().numero) {
+            numeroSuporte = docSnap.data().numero;
+        }
+    } catch (e) {
+        console.error("Erro ao carregar suporte global:", e);
+    }
+    
     const numLimpo = numeroSuporte.replace(/\D/g, '');
-    
-    // Define a mensagem
-    const mensagem = encodeURIComponent("Olá! Atingi meu limite de Turbo e gostaria de atualizar meu plano.");
-    
-    // Abre o link
+    const mensagem = encodeURIComponent("Olá! Preciso de ajuda com meu painel.");
     window.open(`https://wa.me/${numLimpo}?text=${mensagem}`, '_blank');
-};
-
-// Função para fechar o modal (necessária para o botão do HTML)
-window.fecharModalLimite = function() {
-    const modal = document.getElementById('modalLimite');
-    if (modal) modal.style.display = 'none';
 };
