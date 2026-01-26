@@ -98,10 +98,54 @@
 
         .badge-turbo { position: absolute; top: 5px; left: 5px; background: var(--primary); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
         .badge-promo { position: absolute; top: 25px; left: 5px; background: var(--success); color: white; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+/* Pop-up de Sucesso Quadrado */
+.popup-copiado-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
 
-        /* Ajuste Visual Mensagem de Copiado */
-        .toast-copiado { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 3000; font-size: 14px; text-align: center; border-left: 5px solid var(--success); max-width: 90%; display: none; animation: slideUpToast 0.4s ease; }
-        @keyframes slideUpToast { from { bottom: -50px; opacity: 0; } to { bottom: 20px; opacity: 1; } }
+.popup-copiado-box {
+    background: #28a745; /* Verde Sucesso */
+    color: white;
+    width: 300px;
+    padding: 30px;
+    border-radius: 15px;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    border: 3px solid #ffffff;
+    animation: scaleIn 0.3s ease-out;
+}
+
+.btn-fechar-popup {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: #ff0000; /* X Vermelho */
+    color: white;
+    border: 2px solid white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
     </style>
 </head>
 <body>
@@ -159,11 +203,9 @@
             <i class="fa-solid fa-id-card"></i> Link Modo Cardápio
         </button>
         <button onclick="prepararLink('produto')" class="btn-edit-perfil-head" style="flex: 1; justify-content: center; padding: 10px; background: #f0f9ff; color: #007bff;">
-            <i class="fa-solid fa-store"></i> Link Modo Vitrine
+            <i class="fa-solid fa- store"></i> Link Modo Vitrine
         </button>
     </div>
-    <div id="feedback-copia" style="display: none; margin-top: 10px; padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 14px; animation: slideDown 0.3s ease;">
-</div>
     <div id="area-link-gerado" style="display: none; margin-top: 10px; animation: slideDown 0.3s ease;">
         <label id="labelTipoLink" style="font-size: 11px; color: #666;"></label>
         <div class="input-inline-btn">
@@ -291,13 +333,8 @@
 
     </div>
 
-    <div id="toastMensagem" class="toast-copiado"></div>
-
     <script type="module" src="./painel-lojista.js"></script>
     <script>
-        let currentLinkType = '';
-        let baseCleanUrl = '';
-
         function togglePainelPerfil() {
             const p = document.getElementById('painelPerfil');
             p.style.display = p.style.display === 'block' ? 'none' : 'block';
@@ -307,4 +344,86 @@
             const f = document.getElementById('containerFormPublicar');
             const g = document.getElementById('cardGatilhoPublicar');
             if(f.style.display === 'none') {
-   
+                f.style.display = 'block';
+                g.style.display = 'none';
+                window.scrollTo({ top: f.offsetTop - 100, behavior: 'smooth' });
+            } else {
+                f.style.display = 'none';
+                g.style.display = 'flex';
+            }
+        }
+
+        function forcarAbrirMontar() {
+            document.getElementById('resumo-montar-global').style.display = 'none';
+            document.getElementById('form-montar-global').style.display = 'block';
+        }
+
+        function toggleFormFields() {
+            const cat = document.getElementById('pCategoria').value;
+            const groupTipo = document.getElementById('groupTipoProduto');
+            
+            if(cat === 'Comida') {
+                groupTipo.style.display = 'none';
+            } else {
+                groupTipo.style.display = 'block';
+            }
+            toggleRoupaConfig();
+        }
+
+        function toggleRoupaConfig() {
+            const tipo = document.getElementById('pTipo').value;
+            const cat = document.getElementById('pCategoria').value;
+            const areaRoupa = document.getElementById('area-roupa-config');
+            
+            if (tipo === 'roupa' && cat === 'Geral') {
+                areaRoupa.style.display = 'block';
+            } else {
+                areaRoupa.style.display = 'none';
+            }
+        }
+
+        function toggleMontarGlobalUI() {
+            const check = document.getElementById('checkMontarGlobal');
+            const form = document.getElementById('form-montar-global');
+            const resumo = document.getElementById('resumo-montar-global');
+
+            if (check.checked) {
+                form.style.display = 'block';
+                resumo.style.display = 'none';
+            } else {
+                form.style.display = 'none';
+                resumo.style.display = 'none';
+            }
+        }
+
+        function addConfigRow(containerId, valorNome = '', valorPreco = '') {
+            const container = document.getElementById(containerId);
+            const div = document.createElement('div');
+            div.className = 'item-config';
+            div.innerHTML = `
+                <input type="text" placeholder="Nome" class="conf-nome" value="${valorNome}">
+                <input type="text" placeholder="Preço" class="conf-preco" style="width:80px" value="${valorPreco}">
+                <button onclick="this.parentElement.remove()" style="background:none; border:none; color:red; cursor:pointer;">&times;</button>
+            `;
+            container.appendChild(div);
+        }
+    
+    </script>
+    <div id="modalLimite" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+    <div style="background:white; padding:30px; border-radius:15px; max-width:400px; width:100%; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <button onclick="fecharModalLimite()" style="position:absolute; top:10px; right:15px; background:none; border:none; font-size:24px; cursor:pointer; color:#999;">&times;</button>
+        <i class="fa-solid fa-arrow-up-right-dots" style="font-size:50px; color:#ee4d2d; margin-bottom:15px;"></i>
+        <h3 style="margin:0 0 10px; color:#333;">Limite Atingido</h3>
+        <p style="font-size:14px; color:#666; line-height:1.5; margin-bottom:20px;">Você atingiu o limite do seu plano. Para continuar, atualize seu plano ou fale com o suporte.</p>
+        <a href="https://wa.me/SEU_NUMERO_AQUI" target="_blank" style="display:block; background:#28a745; color:white; text-decoration:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px;">
+            <i class="fa-brands fa-whatsapp"></i> Falar com o Suporte
+        </a>
+    </div>
+</div>
+
+<script>
+    window.abrirModalLimite = () => document.getElementById('modalLimite').style.display = 'flex';
+    window.fecharModalLimite = () => document.getElementById('modalLimite').style.display = 'none';
+</script>
+</body>
+</html>

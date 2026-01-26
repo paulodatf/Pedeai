@@ -471,7 +471,7 @@ window.prepararLink = function(modo) {
     window.scrollTo({ top: area.offsetTop - 150, behavior: 'smooth' });
 };
 
-// Função para copiar para a área de transferência
+// Função de cópia com Pop-up Quadrado
 window.copiarLinkBotao = function() {
     const input = document.getElementById('inputLinkCopia');
     const linkCopiado = input.value;
@@ -479,23 +479,45 @@ window.copiarLinkBotao = function() {
     input.select();
     input.setSelectionRange(0, 99999); 
 
-    // Identifica o modo através da URL contida no input
     const isCardapio = linkCopiado.includes('modo=gourmet');
     
-    // Define a mensagem personalizada
+    // Mensagens e ícones conforme solicitado
     const mensagem = isCardapio 
-        ? "🍔🍕🍣 Link do Cardápio copiado! Pronto para enviar aos clientes."
-        : "🛍️🛒 Link da Vitrine copiado! Pronto para turbinar suas vendas.";
+        ? "🍔🍕 Sushi!<br><br>O link do seu cardápio está pronto para ser divulgado ☺️"
+        : "🛍️🛒 Sucesso!<br><br>O link da sua vitrine está pronta para ser divulgado ☺️";
 
     try {
         navigator.clipboard.writeText(linkCopiado);
-        alert(mensagem);
+        abrirPopUpSucesso(mensagem);
     } catch (err) {
-        // Fallback para navegadores que não suportam navigator.clipboard
         document.execCommand('copy');
-        alert(mensagem);
+        abrirPopUpSucesso(mensagem);
     }
 };
+
+// Função para criar o Pop-up com X vermelho
+function abrirPopUpSucesso(texto) {
+    // Remove se já houver um aberto
+    const overlayExistente = document.querySelector('.popup-copiado-overlay');
+    if (overlayExistente) overlayExistente.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'popup-copiado-overlay';
+    
+    overlay.innerHTML = `
+        <div class="popup-copiado-box">
+            <button class="btn-fechar-popup" onclick="this.parentElement.parentElement.remove()">X</button>
+            <div style="font-size: 16px; line-height: 1.4;">${texto}</div>
+        </div>
+    `;
+
+    // Fecha ao clicar fora do quadrado verde
+    overlay.onclick = function(e) {
+        if (e.target === overlay) overlay.remove();
+    };
+
+    document.body.appendChild(overlay);
+}
 
 // A função base que você já possui (garanta que esteja presente)
 window.gerarLinkCartaoVisita = function(modo) {
