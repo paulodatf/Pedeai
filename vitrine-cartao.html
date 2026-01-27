@@ -68,14 +68,14 @@
 <body class="vitrine-cartao-page">
 
     <header class="header-cartao">
-        <a href="index.html" class="btn-voltar-topo"><i class="fas fa-chevron-left"></i></a>
+        <a href="javascript:history.back()" class="btn-voltar-topo"><i class="fas fa-chevron-left"></i></a>
         <img id="fotoLojista" src="" class="foto-cartao" alt="Logo">
         <div class="info-loja-header">
             <h1 id="nomeLojista" class="nome-loja-cartao"></h1>
             <p id="msgBoasVindas" class="msg-boas-vindas"></p>
         </div>
     </header>
-
+    
     <div id="barMontar">
         <button class="btn-montar-global" onclick="window.abrirConfigComida('montar_global', true)">
             <i class="fas fa-utensils"></i> <span id="txtBarMontar">MONTAR MEU PEDIDO</span>
@@ -119,5 +119,8 @@
             window.tamanhoSelecionadoAtual = tamanho;
         };
     </script>
-</body>
+<a href="index.html" style="position: fixed; bottom: 20px; right: 20px; background: #fff; color: #444; padding: 10px 18px; border-radius: 30px; text-decoration: none; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 9998; border: 1px solid #eee;">
+        <i class="fas fa-store" style="color: var(--orange);"></i>
+        Ver outras lojas
+    </a></body>
 </html>
