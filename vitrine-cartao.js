@@ -50,11 +50,6 @@ async function carregarDadosEProdutos() {
         document.getElementById('nomeLojista').innerText = nomeLoja;
         document.getElementById('fotoLojista').src = otimizarURL(fotoLoja, 150);
         
-        if(modo === 'gourmet' && lojistaInfoCache.montarAtivo) {
-            document.getElementById('barMontar').style.display = 'flex';
-            document.getElementById('txtBarMontar').innerText = lojistaInfoCache.montarTitulo || 'MONTAR MEU PEDIDO';
-        }
-
         const snap = await getDocs(collection(db, "produtos"));
         let htmlDestaque = "";
         let htmlGridLojista = "";
@@ -85,7 +80,10 @@ async function carregarDadosEProdutos() {
                                 <i class="fas fa-quote-left"></i>
                                 <p class="texto-desc-gourmet">${p.descricao || 'Sem descrição disponível.'}</p>
                             </div>
-                            <button onclick="window.abrirConfigComida('${d.id}', false)" class="btn-action-main" style="background:var(--ifood-red);">ADICIONAR AO PEDIDO</button>
+                            <div class="container-botoes-gourmet">
+                                <button onclick="window.abrirConfigComida('${d.id}', false, true)" class="btn-action-main" style="background:var(--ifood-red);">ADICIONAR</button>
+                                ${lojistaInfoCache.montarAtivo ? `<button onclick="window.abrirConfigComida('montar_global', true)" class="btn-action-main btn-montar-inline"><i class="fas fa-utensils"></i> MONTAR</button>` : ''}
+                            </div>
                         </div><hr style="border:0; border-top:8px solid #f8f8f8; margin:0;">`;
                 } else {
                     htmlDestaque = `
@@ -128,50 +126,108 @@ window.selecionarTamanho = (btn, tamanho) => {
     window.tamanhoSelecionadoAtual = tamanho;
 };
 
-window.abrirConfigComida = async (id, isGlobal = false) => {
+window.abrirConfigComida = async (id, isGlobal = false, isIntermediario = false) => {
     if (isGlobal) {
         itemAtualConfig = { id: 'montar_global', nome: lojistaInfoCache.montarTitulo || "Personalizado", preco: "0,00", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfilComida, descricao: "" };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
-        itemAtualConfig = { ...d.data(), id: d.id };
+        const data = d.data();
+        // Mescla adicionais do produto com os adicionais gerais da loja (reaproveitando a estrutura do MONTAR)
+        const listaAdicionais = [...(data.adicionais || []), ...(lojistaInfoCache.montarAdicionais || [])];
+        itemAtualConfig = { ...data, id: d.id, adicionais: listaAdicionais };
     }
-    renderizarModalConfig();
+    renderizarModalConfig(isIntermediario);
 };
 
-function renderizarModalConfig() {
+function renderizarModalConfig(isIntermediario = false) {
     const content = document.getElementById('modalContent');
     document.getElementById('modalNome').innerText = itemAtualConfig.nome;
     
     let html = '';
-    if (itemAtualConfig.variacoes?.length > 0) {
-        html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ESCOLHA UMA OPÇÃO:</div>`;
-        itemAtualConfig.variacoes.forEach((v, i) => {
-            html += `<label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;"><input type="radio" name="variacao" value="${i}" ${i===0?'checked':''}> <div style="margin-left:10px; flex:1;">${v.nome}</div> <div style="color:var(--ifood-red);">+ R$ ${v.preco}</div></label>`;
-        });
+
+    if (isIntermediario) {
+        // Layout para Produto Pronto (ADICIONAR)
+        html += `
+            <div style="padding:15px; border-bottom:1px solid #eee;">
+                <div style="font-weight:bold; font-size:16px;">${itemAtualConfig.nome}</div>
+                <div style="color:var(--ifood-red); font-weight:bold; margin:5px 0;">R$ ${itemAtualConfig.preco}</div>
+                <div style="font-size:13px; color:#666;">${itemAtualConfig.descricao || ''}</div>
+            </div>
+            <div id="btn-exibir-adicionais" onclick="document.getElementById('secao-adicionais-oculta').style.display='block'; this.style.display='none'" 
+                 style="margin: 15px; padding: 12px; border: 1px dashed var(--ifood-red); color: var(--ifood-red); text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                <i class="fas fa-plus-circle"></i> Adicionar ingredientes adicionais
+            </div>
+            <div id="secao-adicionais-oculta" style="display: none;">
+                <div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ADICIONAIS:</div>
+                ${(itemAtualConfig.adicionais || []).map((a, i) => `
+                    <label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;">
+                        <input type="checkbox" name="adicional" value="${i}"> 
+                        <div style="margin-left:10px; flex:1;">${a.nome}</div> 
+                        <div style="color:var(--ifood-red);">+ R$ ${a.preco}</div>
+                    </label>`).join('')}
+            </div>`;
+    } else {
+        // Layout para Montagem do Zero (MONTAR)
+        if (itemAtualConfig.variacoes?.length > 0) {
+            html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ESCOLHA UMA OPÇÃO:</div>`;
+            itemAtualConfig.variacoes.forEach((v, i) => {
+                html += `<label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;"><input type="radio" name="variacao" value="${i}" ${i===0?'checked':''}> <div style="margin-left:10px; flex:1;">${v.nome}</div> <div style="color:var(--ifood-red);">+ R$ ${v.preco}</div></label>`;
+            });
+        }
+        if (itemAtualConfig.adicionais?.length > 0) {
+            html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ADICIONAIS:</div>`;
+            itemAtualConfig.adicionais.forEach((a, i) => {
+                html += `<label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;"><input type="checkbox" name="adicional" value="${i}"> <div style="margin-left:10px; flex:1;">${a.nome}</div> <div style="color:var(--ifood-red);">+ R$ ${a.preco}</div></label>`;
+            });
+        }
     }
-    if (itemAtualConfig.adicionais?.length > 0) {
-        html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ADICIONAIS:</div>`;
-        itemAtualConfig.adicionais.forEach((a, i) => {
-            html += `<label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;"><input type="checkbox" name="adicional" value="${i}"> <div style="margin-left:10px; flex:1;">${a.nome}</div> <div style="color:var(--ifood-red);">+ R$ ${a.preco}</div></label>`;
-        });
-    }
+
     content.innerHTML = html;
+
+    const atualizarPrecoModal = () => {
+        // Lógica que diferencia MONTAR (começa em 0) de ADICIONAR (preço do produto)
+        let precoBaseStr = itemAtualConfig.isMontarGlobal ? "0,00" : (itemAtualConfig.preco || "0,00");
+        let total = parseFloat(precoBaseStr.toString().replace(',', '.')) || 0;
+        
+        const varSel = document.querySelector('input[name="variacao"]:checked');
+        if (varSel && itemAtualConfig.variacoes) {
+            let vPreco = itemAtualConfig.variacoes[varSel.value].preco.toString().replace(',', '.');
+            total += parseFloat(vPreco) || 0;
+        }
+
+        document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
+            if (itemAtualConfig.adicionais && itemAtualConfig.adicionais[cb.value]) {
+                let aPreco = itemAtualConfig.adicionais[cb.value].preco.toString().replace(',', '.');
+                total += parseFloat(aPreco) || 0;
+            }
+        });
+
+        const btn = document.getElementById('btnConfirmarConfig');
+        if (btn) btn.innerText = `Confirmar - R$ ${total.toFixed(2).replace('.', ',')}`;
+    };
+
+    content.querySelectorAll('input').forEach(input => {
+        input.addEventListener('change', atualizarPrecoModal);
+    });
+
+    atualizarPrecoModal();
     document.getElementById('modalComida').style.bottom = '0';
     document.getElementById('overlayComida').style.display = 'block';
-    
+
+    // Mantém a lógica do clique de confirmação original
     document.getElementById('btnConfirmarConfig').onclick = () => {
-        let total = parseFloat(itemAtualConfig.preco.toString().replace(',','.'));
+        let totalFinal = parseFloat((itemAtualConfig.isMontarGlobal ? "0,00" : itemAtualConfig.preco).toString().replace(',','.'));
         let detalhesPedido = [];
         const varSel = document.querySelector('input[name="variacao"]:checked');
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
-            total += parseFloat(v.preco.toString().replace(',','.'));
+            totalFinal += parseFloat(v.preco.toString().replace(',','.'));
             detalhesPedido.push(`Opção: ${v.nome}`);
         }
         const adds = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
-            total += parseFloat(a.preco.toString().replace(',','.'));
+            totalFinal += parseFloat(a.preco.toString().replace(',','.'));
             adds.push(a.nome);
         });
         if(adds.length > 0) detalhesPedido.push(`Adicionais: ${adds.join(', ')}`);
@@ -179,22 +235,17 @@ function renderizarModalConfig() {
         const obs = document.getElementById('gourmet-obs').value;
         if(obs) detalhesPedido.push(`Obs: ${obs}`);
 
-        // A descrição final para o carrinho inclui a descrição original + as configurações escolhidas
         const configTexto = detalhesPedido.length > 0 ? ` | Escolhas: ${detalhesPedido.join(' | ')}` : "";
         const descricaoFinal = (itemAtualConfig.descricao || "") + configTexto;
-
-        const precoFormatado = total.toFixed(2).replace('.', ',');
-        const linkDestaque = gerarLinkDestaque(itemAtualConfig.id);
-        const fotoFinal = itemAtualConfig.foto ? (Array.isArray(itemAtualConfig.foto) ? itemAtualConfig.foto[0] : itemAtualConfig.foto) : lojistaInfoCache.fotoPerfilComida;
 
         window.adicionarAoCarrinho(
             itemAtualConfig.id, 
             itemAtualConfig.nome, 
-            precoFormatado, 
+            totalFinal.toFixed(2).replace('.', ','), 
             itemAtualConfig.owner, 
             itemAtualConfig.whatsapp, 
-            otimizarURL(fotoFinal, 100),
-            linkDestaque,
+            otimizarURL(itemAtualConfig.foto ? (Array.isArray(itemAtualConfig.foto) ? itemAtualConfig.foto[0] : itemAtualConfig.foto) : lojistaInfoCache.fotoPerfilComida, 100),
+            gerarLinkDestaque(itemAtualConfig.id),
             descricaoFinal
         );
         

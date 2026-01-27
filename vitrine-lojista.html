@@ -38,8 +38,23 @@
 
         body.gourmet-mode .obs-label { font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; display: block; }
         body.gourmet-mode .obs-box { width: 100%; border: 1px solid #e2e2e2; border-radius: 8px; padding: 10px; min-height: 60px; font-family: inherit; background: #f9f9f9; resize: none; outline: none; font-size: 13px; }
-
-        body.gourmet-mode .btn-gourmet-action { width: 100%; background: var(--ifood-red); color: #fff; padding: 14px; border: none; border-radius: 10px; font-weight: 700; font-size: 14px; margin-top: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    
+.btn-action-main:active { transform: scale(0.98); }
+        /* Ajuste Moderno Botões Gourmet */
+        .container-botoes-gourmet { display: flex; gap: 12px; margin-top: 20px; width: 100%; padding: 0 5px; }
+        .container-botoes-gourmet .btn-action-main { 
+            flex: 1; 
+            height: 48px; 
+            border-radius: 25px; 
+            font-size: 14px; 
+            letter-spacing: 0.3px; 
+            margin: 0 !important; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .btn-montar-inline { background: #333 !important; color: #fff !important; }
         body.gourmet-mode .gourmet-section-title { padding: 10px 16px; font-size: 16px; font-weight: 700; color: var(--gourmet-dark); border-top: 6px solid #f8f8f8; margin-top: 10px; }
 
         .tamanho-container { margin: 15px 0; }
@@ -73,13 +88,6 @@
 
     <div id="productDetail"></div>
 
-    <div id="barMontar" class="bar-montar-container" onclick="window.abrirConfigComida(null, true)">
-        <div class="bar-montar-content">
-            <span id="txtBarMontar" class="bar-montar-label">MONTAR MEU PEDIDO</span>
-            <i class="fas fa-chevron-right bar-montar-icon"></i>
-        </div>
-    </div>
-
     <div class="modal-overlay" id="overlayComida" onclick="fecharModalComida()"></div>
     <div id="modalComida">
         <div class="modal-header">
@@ -95,8 +103,12 @@
             <p id="texto-descricao-modal" style="margin: 0; font-size: 14px; color: #555; font-style: italic; line-height: 1.5;"></p>
         </div>
 
-        <div style="padding:15px; border-top: 1px solid #eee;">
-            <button id="btnConfirmarConfig" style="width:100%; padding:16px; border-radius:12px; border:none; color:#fff; font-weight:700; font-size:15px; cursor:pointer; text-transform:uppercase; background:var(--ifood-red);">Confirmar</button>
+        <div style="padding:15px; border-top: 1px solid #eee; background: #fff;">
+            <div style="margin-bottom: 12px;">
+                <label style="font-size: 11px; font-weight: 700; color: #999; margin-bottom: 8px; display: block; text-transform: uppercase;">Alguma observação?</label>
+                <textarea id="gourmet-obs" placeholder="Ex: tirar tomate, molho à parte..." style="width:100%; height:55px; padding:12px; border-radius:12px; border:1px solid #f2f2f2; background:#f9f9f9; font-family:inherit; font-size:13px; resize:none; outline:none;"></textarea>
+            </div>
+            <button id="btnConfirmarConfig" style="width:100%; height:50px; border-radius:25px; border:none; color:#fff; font-weight:700; font-size:15px; cursor:pointer; text-transform:uppercase; background:var(--ifood-red); box-shadow: 0 4px 12px rgba(234, 29, 44, 0.2);">Confirmar</button>
         </div>
     </div>
 

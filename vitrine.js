@@ -43,6 +43,10 @@ export async function carregarVitrineCompleta() {
                     return;
                 }
 
+                // Define qual foto e qual nome usar baseado no modo e no que existe salvo no banco
+                const fotoParaExibir = (modo === 'gourmet' ? lojistaInfo.fotoPerfilComida : lojistaInfo.fotoPerfilGeral) || lojistaInfo.fotoPerfil || 'https://via.placeholder.com/100';
+                const nomeParaExibir = (modo === 'gourmet' ? lojistaInfo.nomeLojaComida : lojistaInfo.nomeLojaGeral) || lojistaInfo.nomeLoja || 'Vitrine';
+
                 const header = document.getElementById('main-header');
                 if (header) {
                     header.innerHTML = `
@@ -50,23 +54,15 @@ export async function carregarVitrineCompleta() {
                             <div style="display: flex; align-items: center;">
                                 <a href="index.html" class="back-btn" style="text-decoration:none; color:#333;"><i class="fas fa-arrow-left"></i></a>
                                 <div style="display: flex; flex-direction: column;">
-                                    <span style="font-weight: 700; font-size: 14px; color:#111;">${lojistaInfo.nomeLoja || 'Vitrine'}</span>
+                                    <span style="font-weight: 700; font-size: 14px; color:#111;">${nomeParaExibir}</span>
                                     <span style="font-size: 11px; color:#888;">${modo === 'gourmet' ? 'Cardápio Digital' : 'Loja Oficial'}</span>
                                 </div>
                             </div>
-                            <img src="${otimizarURL(lojistaInfo.fotoPerfil || 'https://via.placeholder.com/100', 100)}" 
+                            <img src="${otimizarURL(fotoParaExibir, 100)}" 
                                  style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
                         </div>`;
                 }
-
-                if(modo === 'gourmet' && lojistaInfo.montarAtivo) {
-                    const barM = document.getElementById('barMontar');
-                    if(barM) {
-                        barM.style.display = 'flex';
-                        const txtBtn = document.getElementById('txtBarMontar');
-                        if(txtBtn) txtBtn.innerText = lojistaInfo.montarTitulo || 'MONTAR MEU PEDIDO';
-                    }
-                }
+                
             } else { return; }
         }
 
@@ -88,7 +84,8 @@ export async function carregarVitrineCompleta() {
             const imgCapaRaw = fotos[0] || "https://via.placeholder.com/300";
             const imgCapaOtimizada = otimizarURL(imgCapaRaw, 600);
             const linkProduto = gerarLinkVitrine(sellerId, d.id, modo);
-            const temConfig = p.categoria === 'Comida' && ((p.variacoes && p.variacoes.length > 0) || (p.adicionais && p.adicionais.length > 0));
+            // Agora sempre considera que tem config se for Comida, para oferecer os adicionais da loja
+const temConfig = p.categoria === 'Comida';
             const descSanitizada = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
             const nomeSanitizado = p.nome.replace(/'/g, "\\'");
 
@@ -126,7 +123,20 @@ export async function carregarVitrineCompleta() {
 
             if (d.id === activeProductId) {
                 if (modo === 'gourmet') {
-                    let btnHtml = `<button onclick="${temConfig ? funcAddConfig : funcAddDiretoSimples}" class="btn-gourmet-action"><i class="fas fa-shopping-basket"></i> ADICIONAR AO CARRINHO</button>`;
+                  // JEITO 1 — ADICIONAR (TRADICIONAL) agora abre formulário intermediário
+const funcAbrirFormularioIntermediario = `window.abrirConfigComida('${d.id}', false, true)`;
+
+const funcAbrirIntermediario = `window.abrirConfigComida('${d.id}', false, true)`;
+                    let btnHtml = `
+<div class="container-botoes-gourmet">
+    <button onclick="${temConfig ? funcAddConfig : funcAbrirIntermediario}" class="btn-action-main" style="background:var(--ifood-red);">
+        <i class="fas fa-shopping-basket"></i> ADICIONAR
+    </button>
+    ${lojistaInfoCache.montarAtivo ? `
+    <button onclick="window.abrirConfigComida(null, true)" class="btn-action-main btn-montar-inline">
+        <i class="fas fa-utensils"></i> MONTAR
+    </button>` : ''}
+</div>`;
                     htmlDestaque = `
                         <div class="gourmet-card-container">
                             <div class="gourmet-image-wrapper">
@@ -140,10 +150,6 @@ export async function carregarVitrineCompleta() {
                             </div>
                             <div class="desc-gourmet-box">
                                 <p class="gourmet-description">${p.descricao || 'Produto selecionado do nosso cardápio.'}</p>
-                            </div>
-                            <div class="gourmet-only" style="display: block;">
-                                <label class="obs-label">Alguma observação?</label>
-                                <textarea id="gourmet-obs" class="obs-box" placeholder="Ex: Sem cebola, bem passado..."></textarea>
                             </div>
                             ${btnHtml}
                         </div>
@@ -219,7 +225,7 @@ window.selecionarTamanho = (btn, tamanho) => {
     window.tamanhoSelecionadoAtual = tamanho;
 };
 
-window.abrirConfigComida = async (id, isGlobal = false) => {
+window.abrirConfigComida = async (id, isGlobal = false, isIntermediario = false) => {
     const modal = document.getElementById('modalComida');
     const overlay = document.getElementById('overlayComida');
     const content = document.getElementById('modalContent');
@@ -233,25 +239,54 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
         configData = { nome: lojistaInfoCache.montarTitulo || "Personalizar", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfil || "", descricao: "" };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
-        if (d.exists()) { configData = d.data(); configData.id = d.id; }
+        if (d.exists()) { 
+            const data = d.data();
+            // Mantém os dados do produto e injeta os adicionais globais da loja
+            configData = { 
+                ...data, 
+                id: d.id,
+                adicionais: [...(data.adicionais || []), ...(lojistaInfoCache.montarAdicionais || [])]
+            }; 
+        }
     }
 
     if (!configData) return;
     itemAtualConfig = configData;
 
     let html = "";
-    if (configData.variacoes?.length > 0) {
-        html += `<div class="config-section-title">Escolha uma opção</div>`;
-        configData.variacoes.forEach((v, idx) => {
-            html += `<label class="config-item"><div class="config-info"><span class="config-name">${v.nome}</span><span class="config-price">+ R$ ${v.preco}</span></div><input type="radio" name="variacao" value="${idx}" onchange="window.atualizarPrecoModal()" ${idx === 0 ? 'checked' : ''}></label>`;
-        });
-    }
-
-    if (configData.adicionais?.length > 0) {
-        html += `<div class="config-section-title">Adicionais</div>`;
-        configData.adicionais.forEach((a, idx) => {
-            html += `<label class="config-item"><div class="config-info"><span class="config-name">${a.nome}</span><span class="config-price">+ R$ ${a.preco}</span></div><input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()"></label>`;
-        });
+    if (isIntermediario) {
+        if (configData.adicionais?.length > 0) {
+            html += `
+                <div id="btn-exibir-adicionais" onclick="document.getElementById('secao-adicionais-oculta').style.display='block'; this.style.display='none'" 
+                     style="margin: 15px; padding: 12px; border: 1px dashed #ea1d2c; color: #ea1d2c; text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer;">
+                    <i class="fas fa-plus-circle"></i> Adicionar ingredientes adicionais
+                </div>
+                <div id="secao-adicionais-oculta" style="display: none;">
+                    <div class="config-section-title">Adicionais</div>
+                    ${configData.adicionais.map((a, idx) => `
+                        <label class="config-item">
+                            <div class="config-info">
+                                <span class="config-name">${a.nome}</span>
+                                <span class="config-price">+ R$ ${a.preco}</span>
+                            </div>
+                            <input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()">
+                        </label>
+                    `).join('')}
+                </div>`;
+        }
+    } else {
+        if (configData.variacoes?.length > 0) {
+            html += `<div class="config-section-title">Escolha uma opção</div>`;
+            configData.variacoes.forEach((v, idx) => {
+                html += `<label class="config-item"><div class="config-info"><span class="config-name">${v.nome}</span><span class="config-price">+ R$ ${v.preco}</span></div><input type="radio" name="variacao" value="${idx}" onchange="window.atualizarPrecoModal()" ${idx === 0 ? 'checked' : ''}></label>`;
+            });
+        }
+        if (configData.adicionais?.length > 0) {
+            html += `<div class="config-section-title">Adicionais</div>`;
+            configData.adicionais.forEach((a, idx) => {
+                html += `<label class="config-item"><div class="config-info"><span class="config-name">${a.nome}</span><span class="config-price">+ R$ ${a.preco}</span></div><input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()"></label>`;
+            });
+        }
     }
 
     content.innerHTML = html;
@@ -263,12 +298,19 @@ window.abrirConfigComida = async (id, isGlobal = false) => {
         const containerDescModal = document.getElementById('container-desc-modal');
         if(containerDescModal) containerDescModal.style.display = itemAtualConfig.descricao ? 'block' : 'none';
     }
+
+    // Ajuste profissional: limpa e prepara o campo de observação dentro do modal
+    const campoObs = document.getElementById('gourmet-obs');
+    if(campoObs) {
+        campoObs.value = "";
+        campoObs.placeholder = itemAtualConfig.isMontarGlobal ? "Como deseja sua montagem?" : "Alguma observação? (Ex: sem cebola)";
+    }
     
     window.atualizarPrecoModal();
 };
 
 window.atualizarPrecoModal = () => {
-    let total = itemAtualConfig.isMontarGlobal ? 0 : parseFloat(itemAtualConfig.preco.replace(',', '.'));
+    let total = itemAtualConfig.isMontarGlobal ? 0 : parseFloat(itemAtualConfig.preco.toString().replace(',', '.'));
     const varSelected = document.querySelector('input[name="variacao"]:checked');
     if(varSelected) total += parseFloat(itemAtualConfig.variacoes[varSelected.value].preco.replace(',', '.'));
     document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
@@ -305,4 +347,4 @@ window.atualizarPrecoModal = () => {
         document.getElementById('modalComida').classList.remove('active');
         document.getElementById('overlayComida').style.display = 'none';
     };
-};
+}
