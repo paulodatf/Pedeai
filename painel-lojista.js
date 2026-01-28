@@ -482,24 +482,35 @@ window.prepararLink = function(modo) {
 // Função de cópia com Pop-up Quadrado
 window.copiarLinkBotao = function() {
     const input = document.getElementById('inputLinkCopia');
-    const linkCopiado = input.value;
+    const linkOriginal = input.value;
     
-    input.select();
-    input.setSelectionRange(0, 99999); 
+    const isCardapio = linkOriginal.includes('modo=gourmet');
+    
+    // Criação do texto de divulgação com emojis e quebra de linha
+    let textoDivulgacao = "";
+    if (isCardapio) {
+        textoDivulgacao = `🍔 Confira nosso cardápio online no PedeAí 👇\n${linkOriginal}`;
+    } else {
+        textoDivulgacao = `🛍️ Confira nossa vitrine digital no PedeAí 👇\n${linkOriginal}`;
+    }
 
-    const isCardapio = linkCopiado.includes('modo=gourmet');
-    
-    // Mensagens e ícones conforme solicitado
-    const mensagem = isCardapio 
-        ? "🍔🍕 Sushi!<br><br>O link do seu cardápio está pronto para ser divulgado ☺️"
-        : "🛍️🛒 Sucesso!<br><br>O link da sua vitrine está pronta para ser divulgado ☺️";
+    // Mensagem que aparece no balão verde na tela
+    const mensagemFeedback = isCardapio 
+        ? "🍔🍕 Sucesso!<br><br>O link do seu cardápio foi copiado com o texto de divulgação! ☺️"
+        : "🛍️🛒 Sucesso!<br><br>O link da sua vitrine foi copiado com o texto de divulgação! ☺️";
 
     try {
-        navigator.clipboard.writeText(linkCopiado);
-        abrirPopUpSucesso(mensagem);
+        // Copia o texto de divulgação (Texto + Link) para o celular/computador
+        navigator.clipboard.writeText(textoDivulgacao).then(() => {
+            abrirPopUpSucesso(mensagemFeedback);
+        });
     } catch (err) {
+        // Fallback para navegadores antigos: aqui ele copiará o que estiver no input
+        input.value = textoDivulgacao; 
+        input.select();
         document.execCommand('copy');
-        abrirPopUpSucesso(mensagem);
+        input.value = linkOriginal; // Volta o valor do input ao normal
+        abrirPopUpSucesso(mensagemFeedback);
     }
 };
 
