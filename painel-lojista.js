@@ -463,8 +463,16 @@ window.prepararLink = function(modo) {
     const area = document.getElementById('area-link-gerado');
     const input = document.getElementById('inputLinkCopia');
     const label = document.getElementById('labelTipoLink');
+    const icone = document.getElementById('iconeLink');
 
-    label.innerText = modo === 'gourmet' ? "Link Direto: Cardápio Digital" : "Link Direto: Vitrine de Produtos";
+    if (modo === 'gourmet') {
+        label.innerText = "🍔 Este é o link do seu cardápio online:";
+        icone.innerHTML = "🍕";
+    } else {
+        label.innerText = "📢 Este é o link da sua vitrine digital:";
+        icone.innerHTML = "🛍️";
+    }
+    
     input.value = link;
     area.style.display = 'block';
     

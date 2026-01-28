@@ -199,21 +199,59 @@
 <div class="bloco-contexto" style="margin-top: 0; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px;">
     <div class="titulo-contexto">Divulgação Digital</div>
     <div style="display: flex; gap: 10px;">
-        <button onclick="prepararLink('gourmet')" class="btn-edit-perfil-head" style="flex: 1; justify-content: center; padding: 10px; background: #fff5f2; color: var(--primary);">
+        <button id="btn-link-cardapio" onclick="prepararLink('gourmet')" class="btn-edit-perfil-head" style="display: none; flex: 1; justify-content: center; padding: 10px; background: #fff5f2; color: var(--primary);">
             <i class="fa-solid fa-id-card"></i> Link Modo Cardápio
         </button>
-        <button onclick="prepararLink('produto')" class="btn-edit-perfil-head" style="flex: 1; justify-content: center; padding: 10px; background: #f0f9ff; color: #007bff;">
-            <i class="fa-solid fa- store"></i> Link Modo Vitrine
+
+        <button id="btn-link-vitrine" onclick="prepararLink('produto')" class="btn-edit-perfil-head" style="display: flex; flex: 1; justify-content: center; padding: 10px; background: #f0f9ff; color: #007bff;">
+            <i class="fa-solid fa-store"></i> Link Modo Vitrine
         </button>
     </div>
-    <div id="area-link-gerado" style="display: none; margin-top: 10px; animation: slideDown 0.3s ease;">
-        <label id="labelTipoLink" style="font-size: 11px; color: #666;"></label>
-        <div class="input-inline-btn">
-            <input type="text" id="inputLinkCopia" readonly style="background: #f9f9f9; cursor: pointer;" onclick="this.select()">
-            <button onclick="copiarLinkBotao()" class="btn-post btn-mini" style="background: #444;">Copiar</button>
+
+    <div id="area-link-gerado" style="display: none; margin-top: 15px; padding: 15px; border-radius: 12px; background: #f8f9fa; border: 1px solid #e0e0e0; animation: slideDown 0.3s ease;">
+        <div style="text-align: center; margin-bottom: 12px;">
+            <div id="iconeLink" style="font-size: 24px; margin-bottom: 5px;"></div>
+            <strong id="labelTipoLink" style="display: block; font-size: 14px; color: #333;"></strong>
+            <span style="font-size: 12px; color: #666;">Copie o link abaixo e envie para seus clientes:</span>
+        </div>
+        
+        <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 10px; display: flex; align-items: center; gap: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+            <input type="text" id="inputLinkCopia" readonly style="border: none; background: transparent; font-family: monospace; font-size: 13px; color: #007bff; flex-grow: 1; outline: none;" onclick="this.select()">
+            <button onclick="copiarLinkBotao()" style="background: #444; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px; transition: 0.2s;">
+                <i class="fa-solid fa-copy"></i> COPIAR
+            </button>
         </div>
     </div>
 </div>
+
+<script>
+    // Lógica para organizar a exibição sem conflitos
+    (function() {
+        const interval = setInterval(() => {
+            if (window.trocarContexto) {
+                const funcOriginal = window.trocarContexto;
+                window.trocarContexto = function(contexto) {
+                    funcOriginal(contexto); // Executa a lógica do ficheiro JS
+                    
+                    const cardapio = document.getElementById('btn-link-cardapio');
+                    const vitrine = document.getElementById('btn-link-vitrine');
+                    const area = document.getElementById('area-link-gerado');
+
+                    if(area) area.style.display = 'none';
+
+                    if (contexto === 'Comida') {
+                        cardapio.style.setProperty('display', 'flex', 'important');
+                        vitrine.style.setProperty('display', 'none', 'important');
+                    } else {
+                        cardapio.style.setProperty('display', 'none', 'important');
+                        vitrine.style.setProperty('display', 'flex', 'important');
+                    }
+                };
+                clearInterval(interval);
+            }
+        }, 200);
+    })();
+</script>
     <div class="container">
         
         <div id="msgAvisoAdmin" class="aviso-plano"></div>
@@ -415,9 +453,8 @@
         <i class="fa-solid fa-arrow-up-right-dots" style="font-size:50px; color:#ee4d2d; margin-bottom:15px;"></i>
         <h3 style="margin:0 0 10px; color:#333;">Limite Atingido</h3>
         <p style="font-size:14px; color:#666; line-height:1.5; margin-bottom:20px;">Você atingiu o limite do seu plano. Para continuar, atualize seu plano ou fale com o suporte.</p>
-       <button onclick="abrirSuporteDinamico()" style="display:block; width:100%; background:#25d366; color:white; border:none; padding:12px; border-radius:8px; font-weight:bold; cursor:pointer;">
-      <i class="fa-solid fa-headset"></i> Falar com suporte
-</button>
+        <a href="https://wa.me/SEU_NUMERO_AQUI" target="_blank" style="display:block; background:#28a745; color:white; text-decoration:none; padding:12px; border-radius:8px; font-weight:bold; margin-bottom:10px;">
+            <i class="fa-brands fa-whatsapp"></i> Falar com o Suporte
         </a>
     </div>
 </div>
