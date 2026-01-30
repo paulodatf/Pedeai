@@ -137,7 +137,7 @@
 
 <script type="module">
     import { db, GetRegrasLojista } from './config.js';
-    import { collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { collection, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     window.toggleCard = (id) => {
         const el = document.getElementById(id);
@@ -170,12 +170,22 @@
             const itemHTML = `
                 <div class="list-item">
                     <div class="info">
-                        <b>${u.nomeLoja || 'Sem Nome'} <span class="tag-plano" style="background:${regras.corPlano}">${regras.planoNome}</span></b>
+                        <b>${u.nomeLoja || 'Sem Nome'} 
+                            <select onchange="window.alterarPlano('${id}', this.value)" style="margin-left:10px; font-size:10px; border-radius:4px; border:1px solid #ddd; cursor:pointer;">
+                                <option value="basico" ${u.planoAtivo === 'basico' ? 'selected' : ''}>Básico</option>
+                                <option value="premium" ${u.planoAtivo === 'premium' ? 'selected' : ''}>Premium</option>
+                                <option value="vip" ${u.planoAtivo === 'vip' ? 'selected' : ''}>VIP</option>
+                            </select>
+                        </b>
                         <span><i class="fas fa-envelope"></i> ${u.email}</span>
                         <span><i class="fas fa-phone"></i> ${u.whatsapp}</span>
                         ${u.status !== 'pendente' ? vencimentoTexto : ''}
                     </div>
                     <div class="actions">
+                        <button onclick="window.resetarSenhaLojista('${id}')" class="btn" style="background:#6c757d; color:white;" title="Resetar Senha">
+                            <i class="fas fa-key"></i>
+                        </button>
+
                         <a href="https://wa.me/${(u.whatsapp||'').replace(/\D/g,'')}" target="_blank" class="btn btn-zap" title="Cobrar via WhatsApp">
                             <i class="fab fa-whatsapp"></i> CONTATO
                         </a>
@@ -191,6 +201,10 @@
                         ${u.status === 'bloqueado' ? 
                             `<button onclick="actionUser('${id}', 'ativo')" class="btn btn-unblock">REATIVAR</button>` : ''
                         }
+                        
+                        <button onclick="window.excluirLojista('${id}', '${u.nomeLoja || 'esta loja'}')" class="btn" style="background:var(--danger); color:white;" title="Excluir Lojista Definitivamente">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 </div>`;
 
@@ -215,6 +229,55 @@
         } catch (e) {
             console.error("Erro ao atualizar status:", e);
             alert("Erro ao realizar ação.");
+        }
+    };
+
+    // NOVA FUNÇÃO: Alterar Plano Manualmente
+    window.alterarPlano = async (id, novoPlano) => {
+        if(!confirm(`Deseja alterar o plano para ${novoPlano.toUpperCase()}?`)) return;
+        try {
+            await updateDoc(doc(db, "usuarios", id), { 
+                planoAtivo: novoPlano 
+            });
+            alert("Plano atualizado com sucesso!");
+        } catch (e) {
+            alert("Erro ao alterar plano.");
+        }
+    };
+
+    // NOVA FUNÇÃO: Resetar Senha
+    window.resetarSenhaLojista = async (id) => {
+        const novaSenha = prompt("Digite a nova senha para este lojista:");
+        if (!novaSenha || novaSenha.length < 4) return alert("Senha muito curta ou inválida!");
+        
+        try {
+            // Atualiza o campo 'senha' no documento do lojista
+            await updateDoc(doc(db, "usuarios", id), { 
+                senha: novaSenha 
+            });
+            alert("Senha alterada com sucesso no cadastro!");
+        } catch (e) {
+            alert("Erro ao resetar senha.");
+        }
+    };
+
+    // NOVA FUNÇÃO: Excluir Lojista Definitivamente
+    window.excluirLojista = async (id, nome) => {
+        const confirmacao = confirm(`⚠️ ATENÇÃO: Você deseja excluir permanentemente a loja "${nome}"?\n\nIsso liberará o e-mail para um novo cadastro e removerá todos os dados.`);
+        
+        if (!confirmacao) return;
+
+        try {
+            // 1. Reutiliza a lógica de bloqueio para garantir que a vitrine saia do ar na hora
+            await updateDoc(doc(db, "usuarios", id), { status: 'bloqueado' });
+
+            // 2. Remove o documento do lojista do banco de dados (Libera o e-mail/cadastro)
+            await deleteDoc(doc(db, "usuarios", id));
+
+            alert("Lojista removido com sucesso!");
+        } catch (e) {
+            console.error("Erro ao excluir:", e);
+            alert("Erro ao excluir lojista. Tente novamente.");
         }
     };
 

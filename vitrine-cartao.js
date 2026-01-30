@@ -143,31 +143,41 @@ function renderizarModalConfig(isIntermediario = false) {
     const content = document.getElementById('modalContent');
     document.getElementById('modalNome').innerText = itemAtualConfig.nome;
     
+    // Alimenta a caixinha de detalhes existente no HTML
+    const descBox = document.getElementById('texto-descricao-gourmet');
+    if (descBox) {
+        descBox.innerHTML = `<b style="color:var(--ifood-red);">R$ ${itemAtualConfig.preco}</b><br>${itemAtualConfig.descricao || ''}`;
+    }
+
     let html = '';
 
     if (isIntermediario) {
-        // Layout para Produto Pronto (ADICIONAR)
         html += `
             <div style="padding:15px; border-bottom:1px solid #eee;">
                 <div style="font-weight:bold; font-size:16px;">${itemAtualConfig.nome}</div>
-                <div style="color:var(--ifood-red); font-weight:bold; margin:5px 0;">R$ ${itemAtualConfig.preco}</div>
-                <div style="font-size:13px; color:#666;">${itemAtualConfig.descricao || ''}</div>
             </div>
-            <div id="btn-exibir-adicionais" onclick="document.getElementById('secao-adicionais-oculta').style.display='block'; this.style.display='none'" 
-                 style="margin: 15px; padding: 12px; border: 1px dashed var(--ifood-red); color: var(--ifood-red); text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                <i class="fas fa-plus-circle"></i> Adicionar ingredientes adicionais
-            </div>
-            <div id="secao-adicionais-oculta" style="display: none;">
-                <div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ADICIONAIS:</div>
-                ${(itemAtualConfig.adicionais || []).map((a, i) => `
-                    <label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;">
-                        <input type="checkbox" name="adicional" value="${i}"> 
-                        <div style="margin-left:10px; flex:1;">${a.nome}</div> 
-                        <div style="color:var(--ifood-red);">+ R$ ${a.preco}</div>
-                    </label>`).join('')}
-            </div>`;
+
+            ${itemAtualConfig.adicionais?.length > 0 ? `
+                <div id="btn-toggle-adicionais" 
+                     onclick="const lista = document.getElementById('secao-adicionais-oculta'); lista.style.display = (lista.style.display === 'none') ? 'block' : 'none';"
+                     style="margin: 15px; padding: 15px; border: 1px solid #e2e2e2; background: #fdfdfd; color: #333; text-align: center; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-plus" style="color: var(--ifood-red);"></i> 
+                    ADICIONAR EXTRAS
+                </div>
+                
+                <div id="secao-adicionais-oculta" style="display: none;">
+                    <div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ADICIONAIS:</div>
+                    ${itemAtualConfig.adicionais.map((a, i) => `
+                        <label style="display:flex; align-items:center; padding:15px; border-bottom:1px solid #eee;">
+                            <input type="checkbox" name="adicional" value="${i}"> 
+                            <div style="margin-left:10px; flex:1;">${a.nome}</div> 
+                            <div style="color:var(--ifood-red);">+ R$ ${a.preco}</div>
+                        </label>`).join('')}
+                </div>
+            ` : ''}`;
     } else {
-        // Layout para Montagem do Zero (MONTAR)
+        
+        // Layout para Montagem do Zero (Botão MONTAR) - Mantém tudo visível como você pediu
         if (itemAtualConfig.variacoes?.length > 0) {
             html += `<div style="padding:12px; background:#f9f9f9; font-size:12px; font-weight:700;">ESCOLHA UMA OPÇÃO:</div>`;
             itemAtualConfig.variacoes.forEach((v, i) => {
@@ -184,8 +194,8 @@ function renderizarModalConfig(isIntermediario = false) {
 
     content.innerHTML = html;
 
-    const atualizarPrecoModal = () => {
-        // Lógica que diferencia MONTAR (começa em 0) de ADICIONAR (preço do produto)
+    // Função interna para atualizar o preço em tempo real
+    const atualizarPrecoModalLocal = () => {
         let precoBaseStr = itemAtualConfig.isMontarGlobal ? "0,00" : (itemAtualConfig.preco || "0,00");
         let total = parseFloat(precoBaseStr.toString().replace(',', '.')) || 0;
         
@@ -206,30 +216,34 @@ function renderizarModalConfig(isIntermediario = false) {
         if (btn) btn.innerText = `Confirmar - R$ ${total.toFixed(2).replace('.', ',')}`;
     };
 
+    // Adiciona o evento de escuta nos inputs para atualizar o preço
     content.querySelectorAll('input').forEach(input => {
-        input.addEventListener('change', atualizarPrecoModal);
+        input.addEventListener('change', atualizarPrecoModalLocal);
     });
 
-    atualizarPrecoModal();
+    atualizarPrecoModalLocal();
     document.getElementById('modalComida').style.bottom = '0';
     document.getElementById('overlayComida').style.display = 'block';
 
-    // Mantém a lógica do clique de confirmação original
+    // Lógica do botão de confirmação (Carrinho)
     document.getElementById('btnConfirmarConfig').onclick = () => {
         let totalFinal = parseFloat((itemAtualConfig.isMontarGlobal ? "0,00" : itemAtualConfig.preco).toString().replace(',','.'));
         let detalhesPedido = [];
         const varSel = document.querySelector('input[name="variacao"]:checked');
+        
         if(varSel) {
             const v = itemAtualConfig.variacoes[varSel.value];
             totalFinal += parseFloat(v.preco.toString().replace(',','.'));
             detalhesPedido.push(`Opção: ${v.nome}`);
         }
+        
         const adds = [];
         document.querySelectorAll('input[name="adicional"]:checked').forEach(cb => {
             const a = itemAtualConfig.adicionais[cb.value];
             totalFinal += parseFloat(a.preco.toString().replace(',','.'));
             adds.push(a.nome);
         });
+        
         if(adds.length > 0) detalhesPedido.push(`Adicionais: ${adds.join(', ')}`);
         
         const obs = document.getElementById('gourmet-obs').value;

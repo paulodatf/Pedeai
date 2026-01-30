@@ -95,7 +95,8 @@ async function inicializar() {
                 ...data, 
                 nomeLoja: lojista?.nomeLoja || 'Loja Parceira',
                 planoLojista: lojista?.planoAtivo || 'basico',
-                isLojistaAprovado: regras.podeExibirProdutos,
+                // Se o lojista não existe no banco, isLojistaAprovado será false (impede a exibição)
+                isLojistaAprovado: lojista ? regras.podeExibirProdutos : false,
                 isProdutoAtivo: data.status !== 'inativo' && data.visivel !== false
             });
         });

@@ -26,12 +26,41 @@ window.switchTab = (tab) => {
 window.trocarContexto = (contexto) => {
     contextoAtual = contexto;
     
+    // AJUSTE: Atualiza o texto visual do botão de gatilho (o card que abre o form)
+    const txtBtnGatilho = document.getElementById('txtBtnPublicarContexto');
+    if(txtBtnGatilho) txtBtnGatilho.innerText = contexto.toUpperCase();
+
+    // AJUSTE: Atualiza o título dentro do formulário que abre
+    const txtTituloForm = document.getElementById('txtContextoForm');
+    if(txtTituloForm) txtTituloForm.innerText = contexto;
+
     // UI Visual
     document.querySelectorAll('.radio-contexto').forEach(el => el.classList.remove('active'));
     if(contexto === 'Geral') document.getElementById('labelCtxGeral').classList.add('active');
     else document.getElementById('labelCtxComida').classList.add('active');
 
     document.getElementById('txtContextoPerfil').innerText = contexto;
+
+    // =========================================================
+    // BLOCO ADICIONADO: CONTROLE DE EXIBIÇÃO DOS LINKS
+    // =========================================================
+    const btnVitrine = document.getElementById('btn-link-vitrine');
+    const btnCardapio = document.getElementById('btn-link-cardapio');
+    const areaLink = document.getElementById('area-link-gerado');
+
+    // Esconde a área de link aberto para não mostrar o link antigo ao trocar
+    if(areaLink) areaLink.style.display = 'none';
+
+    if (btnVitrine && btnCardapio) {
+        if (contexto === 'Comida') {
+            btnVitrine.style.setProperty('display', 'none', 'important');
+            btnCardapio.style.setProperty('display', 'flex', 'important');
+        } else {
+            btnVitrine.style.setProperty('display', 'flex', 'important');
+            btnCardapio.style.setProperty('display', 'none', 'important');
+        }
+    }
+    // =========================================================
 
     // Atualiza o select de categoria no formulário de produtos automaticamente
     const selectCat = document.getElementById('pCategoria');
@@ -77,7 +106,6 @@ function atualizarUIPerfil() {
         preview.style.display = 'none';
     }
 }
-
 async function verificarStatus() {
     try {
         const docRef = doc(db, "usuarios", userId);
@@ -126,11 +154,29 @@ async function verificarStatus() {
                 aplicarRegrasDePlanoNaInterface();
             }
 
-            // AJUSTE: Seletor de contexto liberado para todos os planos (Básico, Premium, VIP)
-            document.getElementById('seletorContexto').style.display = 'block';
+   // Se for Plano Básico, verificamos se ele já tem um tema definido
+if (userData.planoAtivo === 'basico' || !userData.planoAtivo) {
+    if (!userData.temaEscolhido) {
+        // Se não escolheu, forçamos a escolha antes de mostrar qualquer coisa
+        escolherTemaInicial(); 
+        return; 
+    }
+    // Esconde o seletor (ele não pode trocar)
+    document.getElementById('seletorContexto').style.display = 'none';
+    
+    // AJUSTE AQUI: Forçamos o contexto e atualizamos o texto do botão de publicação imediatamente
+    contextoAtual = userData.temaEscolhido;
+    window.trocarContexto(contextoAtual);
+    
+    // Garante que o texto do botão "Publicar Novo em..." reflita o tema salvo
+    const txtBtn = document.getElementById('txtBtnPublicarContexto');
+    if(txtBtn) txtBtn.innerText = contextoAtual.toUpperCase();
 
-            // Inicializa Interface no contexto padrão
-            window.trocarContexto('Geral');
+} else {
+    // Premium/VIP continuam vendo o seletor normal
+    document.getElementById('seletorContexto').style.display = 'block';
+    window.trocarContexto('Geral');
+}
 
             if(userData.montarAtivo) {
                 document.getElementById('checkMontarGlobal').checked = true;
@@ -459,13 +505,19 @@ window.gerarLinkCartaoVisita = function(modo) {
 };
 // Função para gerar e exibir o link na interface
 window.prepararLink = function(modo) {
-    const link = window.gerarLinkCartaoVisita(modo);
+    // AJUSTE: Se for plano básico, força o modo correto independente do clique
+    let modoReal = modo;
+    if (userData && (userData.planoAtivo === 'basico' || !userData.planoAtivo)) {
+        modoReal = (userData.temaEscolhido === 'Comida') ? 'gourmet' : 'vitrine';
+    }
+
+    const link = window.gerarLinkCartaoVisita(modoReal);
     const area = document.getElementById('area-link-gerado');
     const input = document.getElementById('inputLinkCopia');
     const label = document.getElementById('labelTipoLink');
     const icone = document.getElementById('iconeLink');
 
-    if (modo === 'gourmet') {
+    if (modoReal === 'gourmet') {
         label.innerText = "🍔 Este é o link do seu cardápio online:";
         icone.innerHTML = "🍕";
     } else {
@@ -564,3 +616,24 @@ window.abrirSuporteDinamico = async function() {
     const mensagem = encodeURIComponent("Olá! Preciso de ajuda com meu painel.");
     window.open(`https://wa.me/${numLimpo}?text=${mensagem}`, '_blank');
 };
+async function escolherTemaInicial() {
+    // Cria um fundo branco por cima de tudo para a escolha
+    const overlay = document.createElement('div');
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;";
+    overlay.innerHTML = `
+        <h2>Seu plano é Básico</h2>
+        <p>Escolha em qual setor deseja atuar.<br><b>Esta escolha não poderá ser alterada depois.</b></p>
+        <div style="display:flex; gap:20px; margin-top:20px;">
+            <button onclick="definirTema('Geral')" style="padding:20px; border:2px solid #ee4d2d; border-radius:10px; background:none; cursor:pointer; font-weight:bold;">🛒 Produtos Gerais<br>(Vitrine)</button>
+            <button onclick="definirTema('Comida')" style="padding:20px; border:2px solid #ffc107; border-radius:10px; background:none; cursor:pointer; font-weight:bold;">🍔 Comida / Delivery<br>(Cardápio)</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    window.definirTema = async (tema) => {
+        if(confirm(`Confirmar setor ${tema.toUpperCase()}?`)) {
+            await updateDoc(doc(db, "usuarios", userId), { temaEscolhido: tema });
+            window.location.reload(); // Recarrega já com a trava aplicada
+        }
+    };
+}

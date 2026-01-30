@@ -26,8 +26,8 @@ export const CONFIG_SISTEMA = {
     planos: {
         basico: { 
             nome: "Básico", 
-            preco: 29.90,
-            limiteProdutos: 40, 
+            preco: 35,
+            limiteProdutos: 70, 
             limiteFotosPorProduto: 1, 
             limiteTurbos: 1,
             temDireitoTurbo: true,
@@ -35,8 +35,8 @@ export const CONFIG_SISTEMA = {
         },
         premium: { 
             nome: "Premium", 
-            preco: 59.90,
-            limiteProdutos: 70, 
+            preco: 55,
+            limiteProdutos: 120, 
             limiteFotosPorProduto: 3, 
             limiteTurbos: 3,
             temDireitoTurbo: true,
@@ -44,7 +44,7 @@ export const CONFIG_SISTEMA = {
         },
         vip: { 
             nome: "VIP", 
-            preco: 99.90,
+            preco: 85,
             limiteProdutos: 9999, 
             limiteFotosPorProduto: 6, 
             limiteTurbos: 5,
@@ -64,7 +64,7 @@ export const GetRegrasLojista = (dadosLojista) => {
     const statusRaw = dadosLojista?.status;
     const status = (statusRaw !== null && statusRaw !== undefined) 
         ? String(statusRaw).trim().toLowerCase() 
-        : "ativo";
+        : (dadosLojista ? "ativo" : "bloqueado");
     
     const configuracaoPlano = CONFIG_SISTEMA.planos[planoChave] || CONFIG_SISTEMA.planos.basico;
 

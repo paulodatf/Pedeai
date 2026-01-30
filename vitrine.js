@@ -236,12 +236,20 @@ window.abrirConfigComida = async (id, isGlobal = false, isIntermediario = false)
 
     let configData = null;
     if (isGlobal) {
-        configData = { nome: lojistaInfoCache.montarTitulo || "Personalizar", variacoes: lojistaInfoCache.montarVariacoes || [], adicionais: lojistaInfoCache.montarAdicionais || [], isMontarGlobal: true, owner: lojistaInfoCache.id, whatsapp: lojistaInfoCache.whatsapp, foto: lojistaInfoCache.fotoPerfil || "", descricao: "" };
+        configData = { 
+            nome: lojistaInfoCache.montarTitulo || "Personalizar", 
+            variacoes: lojistaInfoCache.montarVariacoes || [], 
+            adicionais: lojistaInfoCache.montarAdicionais || [], 
+            isMontarGlobal: true, 
+            owner: lojistaInfoCache.id, 
+            whatsapp: lojistaInfoCache.whatsapp, 
+            foto: lojistaInfoCache.fotoPerfil || "", 
+            descricao: "" 
+        };
     } else {
         const d = await getDoc(doc(db, "produtos", id));
         if (d.exists()) { 
             const data = d.data();
-            // Mantém os dados do produto e injeta os adicionais globais da loja
             configData = { 
                 ...data, 
                 id: d.id,
@@ -254,39 +262,44 @@ window.abrirConfigComida = async (id, isGlobal = false, isIntermediario = false)
     itemAtualConfig = configData;
 
     let html = "";
-    if (isIntermediario) {
-        if (configData.adicionais?.length > 0) {
+    
+    // 1. Renderiza Variações (Sempre visíveis se existirem)
+    if (configData.variacoes && configData.variacoes.length > 0) {
+        html += `<div class="config-section-title">Escolha uma opção</div>`;
+        configData.variacoes.forEach((v, idx) => {
             html += `
-                <div id="btn-exibir-adicionais" onclick="document.getElementById('secao-adicionais-oculta').style.display='block'; this.style.display='none'" 
-                     style="margin: 15px; padding: 12px; border: 1px dashed #ea1d2c; color: #ea1d2c; text-align: center; border-radius: 8px; font-weight: bold; cursor: pointer;">
-                    <i class="fas fa-plus-circle"></i> Adicionar ingredientes adicionais
-                </div>
-                <div id="secao-adicionais-oculta" style="display: none;">
-                    <div class="config-section-title">Adicionais</div>
-                    ${configData.adicionais.map((a, idx) => `
-                        <label class="config-item">
-                            <div class="config-info">
-                                <span class="config-name">${a.nome}</span>
-                                <span class="config-price">+ R$ ${a.preco}</span>
-                            </div>
-                            <input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()">
-                        </label>
-                    `).join('')}
-                </div>`;
-        }
-    } else {
-        if (configData.variacoes?.length > 0) {
-            html += `<div class="config-section-title">Escolha uma opção</div>`;
-            configData.variacoes.forEach((v, idx) => {
-                html += `<label class="config-item"><div class="config-info"><span class="config-name">${v.nome}</span><span class="config-price">+ R$ ${v.preco}</span></div><input type="radio" name="variacao" value="${idx}" onchange="window.atualizarPrecoModal()" ${idx === 0 ? 'checked' : ''}></label>`;
-            });
-        }
-        if (configData.adicionais?.length > 0) {
-            html += `<div class="config-section-title">Adicionais</div>`;
-            configData.adicionais.forEach((a, idx) => {
-                html += `<label class="config-item"><div class="config-info"><span class="config-name">${a.nome}</span><span class="config-price">+ R$ ${a.preco}</span></div><input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()"></label>`;
-            });
-        }
+                <label class="config-item">
+                    <div class="config-info">
+                        <span class="config-name">${v.nome}</span>
+                        <span class="config-price">+ R$ ${v.preco}</span>
+                    </div>
+                    <input type="radio" name="variacao" value="${idx}" onchange="window.atualizarPrecoModal()" ${idx === 0 ? 'checked' : ''}>
+                </label>`;
+        });
+    }
+
+    // 2. Renderiza Adicionais (Escondidos por padrão)
+    if (configData.adicionais && configData.adicionais.length > 0) {
+        html += `
+            <div id="btn-toggle-adicionais" 
+                 onclick="const lista = document.getElementById('lista-adicionais'); lista.style.display = (lista.style.display === 'none') ? 'block' : 'none';"
+                 style="margin: 15px; padding: 15px; border: 1px solid #e2e2e2; background: #fdfdfd; color: #333; text-align: center; border-radius: 10px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <i class="fas fa-plus" style="color: #ea1d2c;"></i> 
+                ADICIONAR EXTRAS
+            </div>
+
+            <div id="lista-adicionais" style="display: none;">
+                <div class="config-section-title">Adicionais</div>
+                ${configData.adicionais.map((a, idx) => `
+                    <label class="config-item">
+                        <div class="config-info">
+                            <span class="config-name">${a.nome}</span>
+                            <span class="config-price">+ R$ ${a.preco}</span>
+                        </div>
+                        <input type="checkbox" name="adicional" value="${idx}" onchange="window.atualizarPrecoModal()">
+                    </label>
+                `).join('')}
+            </div>`;
     }
 
     content.innerHTML = html;
@@ -299,7 +312,6 @@ window.abrirConfigComida = async (id, isGlobal = false, isIntermediario = false)
         if(containerDescModal) containerDescModal.style.display = itemAtualConfig.descricao ? 'block' : 'none';
     }
 
-    // Ajuste profissional: limpa e prepara o campo de observação dentro do modal
     const campoObs = document.getElementById('gourmet-obs');
     if(campoObs) {
         campoObs.value = "";

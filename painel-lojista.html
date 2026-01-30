@@ -199,13 +199,13 @@
 <div class="bloco-contexto" style="margin-top: 0; border-top: 1px solid #eee; display: flex; flex-direction: column; gap: 10px;">
     <div class="titulo-contexto">Divulgação Digital</div>
     <div style="display: flex; gap: 10px;">
-        <button id="btn-link-cardapio" onclick="prepararLink('gourmet')" class="btn-edit-perfil-head" style="display: none; flex: 1; justify-content: center; padding: 10px; background: #fff5f2; color: var(--primary);">
-            <i class="fa-solid fa-id-card"></i> Link Modo Cardápio
-        </button>
+        <<button id="btn-link-cardapio" onclick="document.getElementById('inputLinkCopia').value = gerarLinkCartaoVisita('gourmet'); copiarLinkBotao();" class="btn-edit-perfil-head" style="display: none; flex: 1; justify-content: center; padding: 10px; background: #fff5f2; color: var(--primary);">
+    <i class="fa-solid fa-id-card"></i> Link Modo Cardápio
+</button>
 
-        <button id="btn-link-vitrine" onclick="prepararLink('produto')" class="btn-edit-perfil-head" style="display: flex; flex: 1; justify-content: center; padding: 10px; background: #f0f9ff; color: #007bff;">
-            <i class="fa-solid fa-store"></i> Link Modo Vitrine
-        </button>
+<button id="btn-link-vitrine" onclick="document.getElementById('inputLinkCopia').value = gerarLinkCartaoVisita('produto'); copiarLinkBotao();" class="btn-edit-perfil-head" style="display: flex; flex: 1; justify-content: center; padding: 10px; background: #f0f9ff; color: #007bff;">
+    <i class="fa-solid fa-store"></i> Link Modo Vitrine
+</button>
     </div>
 
     <div id="area-link-gerado" style="display: none; margin-top: 15px; padding: 15px; border-radius: 12px; background: #f8f9fa; border: 1px solid #e0e0e0; animation: slideDown 0.3s ease;">
