@@ -98,9 +98,6 @@ function atualizarUIPerfil() {
 
     // Inputs
     document.getElementById('inputNomeLoja').value = nomeCtx;
-    if(document.getElementById('inputWhatsLoja')) {
-        document.getElementById('inputWhatsLoja').value = userData.whatsapp || "";
-    }
     const preview = document.getElementById('previewPerfil');
     if(preview && fotoCtx) {
         preview.style.backgroundImage = `url(${fotoCtx})`;
@@ -232,41 +229,62 @@ async function aplicarRegrasDePlanoNaInterface() {
     }
 }
 
-document.getElementById('btnSalvarNome').onclick = async () => {
+// Função para Abrir/Fechar o Modal e carregar dados
+window.togglePainelPerfil = () => {
+    const modal = document.getElementById('painelPerfil');
+    if (modal.style.display === 'none' || modal.style.display === '') {
+        modal.style.display = 'flex';
+        // Carrega o WhatsApp atual no input quando abre
+        if (userData && userData.whatsapp) {
+            document.getElementById('inputWhatsLoja').value = userData.whatsapp.replace(/\D/g, '');
+        }
+    } else {
+        modal.style.display = 'none';
+    }
+};
+
+// Salvar Nome e WhatsApp
+document.getElementById('btnSalvarPerfilGeral').onclick = async () => {
     const novoNome = document.getElementById('inputNomeLoja').value;
-    if(!novoNome) return alert("Digite um nome!");
+    const novoWhats = document.getElementById('inputWhatsLoja').value;
+    const btn = document.getElementById('btnSalvarPerfilGeral');
+
+    if(!novoNome || !novoWhats) return alert("Preencha todos os campos!");
+    
+    btn.innerText = "Salvando...";
     try {
-        const updateData = {};
+   // Garante que o número salvo tenha o +55, igualzinho no cadastro inicial
+        const numeroFormatado = novoWhats.startsWith('+55') 
+            ? novoWhats 
+            : '+55' + novoWhats.replace(/\D/g, '');
+
+        const updateData = {
+            whatsapp: numeroFormatado // Este é o campo mestre que o carrinho vai ler
+        };
+
         if(userData.planoAtivo === 'premium' || userData.planoAtivo === 'vip') {
             const campo = contextoAtual === 'Comida' ? 'nomeLojaComida' : 'nomeLojaGeral';
             updateData[campo] = novoNome;
+            userData[campo] = novoNome;
         } else {
             updateData.nomeLoja = novoNome;
+            userData.nomeLoja = novoNome;
         }
 
         await updateDoc(doc(db, "usuarios", userId), updateData);
         
-        // Atualiza localmente para não precisar de reload pesado
-        if(userData.planoAtivo === 'premium' || userData.planoAtivo === 'vip') {
-            if(contextoAtual === 'Comida') userData.nomeLojaComida = novoNome;
-            else userData.nomeLojaGeral = novoNome;
-        } else {
-            userData.nomeLoja = novoNome;
-        }
+        // Atualiza localmente
+        userData.whatsapp = novoWhats;
         
         atualizarUIPerfil();
-        alert("Nome atualizado para este contexto!");
-    } catch (e) { alert("Erro ao atualizar nome."); }
-};
-
-document.getElementById('btnSalvarWhats').onclick = async () => {
-    const novoWhats = document.getElementById('inputWhatsLoja').value.replace(/\D/g, '');
-    if(novoWhats.length < 10) return alert("Digite o WhatsApp com DDD (apenas números)!");
-    try {
-        await updateDoc(doc(db, "usuarios", userId), { whatsapp: novoWhats });
-        userData.whatsapp = novoWhats;
-        alert("WhatsApp de vendas atualizado!");
-    } catch (e) { alert("Erro ao atualizar WhatsApp."); }
+        alert("Perfil atualizado com sucesso!");
+        togglePainelPerfil(); // Fecha o modal
+    } catch (e) { 
+        console.error(e);
+        alert("Erro ao atualizar perfil."); 
+    } finally {
+        btn.innerText = "Salvar Alterações";
+    }
 };
 
 document.getElementById('btn-salvar-montar').onclick = async () => {

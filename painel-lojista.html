@@ -164,28 +164,34 @@
         </div>
     </header>
 
-    <div id="painelPerfil" class="painel-edicao-perfil">
-        <div class="perfil-row">
-            <div class="upload-compact" id="dropZone">
-                <div class="preview-overlay" id="previewPerfil"></div>
-                <i class="fa-solid fa-camera"></i>
-                <input type="file" id="inputFotoPerfil" accept="image/*">
-            </div>
+    <div id="painelPerfil" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:2000; align-items:center; justify-content:center; padding:20px; box-sizing:border-box;">
+        <div style="background:white; padding:25px; border-radius:20px; max-width:400px; width:100%; text-align:center; position:relative; box-shadow:0 10px 25px rgba(0,0,0,0.3); animation: slideDown 0.3s ease;">
+            <button onclick="togglePainelPerfil()" style="position:absolute; top:15px; right:15px; background:none; border:none; font-size:22px; cursor:pointer; color:#999;">&times;</button>
             
-            <div style="flex-grow: 1;">
-                <label>Nome da Loja (<span id="txtContextoPerfil">Geral</span>)</label>
-                <div class="input-inline-btn">
-                    <input type="text" id="inputNomeLoja" placeholder="Nome da sua loja">
-                    <button id="btnSalvarNome" class="btn-post btn-mini">Salvar</button>
+            <h3 style="margin:0 0 20px; color:#333;">Editar Perfil</h3>
+
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 20px;">
+                <div class="upload-compact" style="width:100px; height:100px; border:3px solid #ee4d2d;">
+                    <div class="preview-overlay" id="previewPerfil" style="display:block;"></div>
+                    <i class="fa-solid fa-camera" style="font-size:24px;"></i>
+                    <input type="file" id="inputFotoPerfil" accept="image/*">
                 </div>
-                
-                <label style="margin-top: 10px;">WhatsApp de Vendas</label>
-                <div class="input-inline-btn">
-                    <input type="text" id="inputWhatsLoja" placeholder="Ex: 5511999999999">
-                    <button id="btnSalvarWhats" class="btn-post btn-mini" style="background: #25d366;">Salvar</button>
-                </div>
-                <span id="uploadStatus" style="font-size: 11px; color: #888; margin-top: 5px; display: block;">O WhatsApp é único para todos os setores da sua loja.</span>
+                <span style="font-size:13px; font-weight:bold; color:#ee4d2d;">Editar foto de perfil</span>
             </div>
+
+            <div style="text-align:left; margin-bottom:15px;">
+                <label>Nome da Loja (<span id="txtContextoPerfil">Geral</span>)</label>
+                <input type="text" id="inputNomeLoja" placeholder="Nome da sua loja">
+            </div>
+
+            <div style="text-align:left; margin-bottom:20px;">
+                <label><i class="fa-brands fa-whatsapp"></i> WhatsApp de Pedidos</label>
+                <input type="number" id="inputWhatsLoja" placeholder="Ex: 11999999999">
+                <small style="font-size:10px; color:#888;">Apenas números com DDD</small>
+            </div>
+
+            <button id="btnSalvarPerfilGeral" class="btn-post" style="margin:0;">Salvar Alterações</button>
+            <span id="uploadStatus" style="font-size: 11px; color: #888; margin-top: 10px; display: block;"></span>
         </div>
     </div>
 

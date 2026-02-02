@@ -68,10 +68,28 @@ window.removerDoCarrinho = (id) => {
 };
 
 // 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP - FORMATO ATUALIZADO)
-window.finalizarGrupoLojista = (ownerId) => {
+// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP - FORMATO ATUALIZADO)
+window.finalizarGrupoLojista = async (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
+
+    let foneFinal = "";
+    try {
+        // Busca o WhatsApp em tempo real da coleção usuarios para garantir o número atualizado
+        const { doc, getDoc, getFirestore } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
+        const db = getFirestore();
+        const userDoc = await getDoc(doc(db, "usuarios", ownerId));
+        if (userDoc.exists() && userDoc.data().whatsapp) {
+            foneFinal = userDoc.data().whatsapp.replace(/\D/g, '');
+        } else {
+            // Fallback para o número do primeiro item caso o documento não seja encontrado
+            foneFinal = itensLoja[0].whatsapp.replace(/\D/g, '');
+        }
+    } catch (e) {
+        console.error("Erro ao buscar WhatsApp em tempo real:", e);
+        foneFinal = itensLoja[0].whatsapp.replace(/\D/g, '');
+    }
 
     let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
     texto += `────────────────────\n\n`;
@@ -108,8 +126,7 @@ window.finalizarGrupoLojista = (ownerId) => {
     window.atualizarIconeCarrinho();
     window.abrirModalCarrinho();
     
-    const fone = itensLoja[0].whatsapp.replace(/\D/g, '');
-    const urlFinal = `https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`;
+    const urlFinal = `https://wa.me/55${foneFinal}?text=${encodeURIComponent(texto)}`;
     window.open(urlFinal, '_blank');
 };
 
@@ -135,7 +152,7 @@ window.atualizarIconeCarrinho = () => {
         const barMontar = document.getElementById('barMontar');
         const barraVisivel = barMontar && (barMontar.offsetWidth > 0 || barMontar.offsetHeight > 0);
 
-        flutuante.style.bottom = barraVisivel ? '90px' : '30px';
+        // AJUSTE: Removido o controle de bottom dinâmico para respeitar o CSS fixo de 110px
     }
 };
 
@@ -192,7 +209,7 @@ function inicializarCarrinho() {
         return;
     }
     const css = `<style>
-        #carrinho-flutuante { position: fixed; right: 25px; width: 60px; height: 60px; background: #ee4d2d; border-radius: 50%; color: white; display: none; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 9999; cursor: pointer; transition: bottom 0.3s ease, transform 0.2s, opacity 0.3s; }
+        #carrinho-flutuante { position: fixed; right: 25px; bottom: 110px !important; width: 60px; height: 60px; background: #ee4d2d; border-radius: 50%; color: white; display: none; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 9999; cursor: pointer; transition: transform 0.2s, opacity 0.3s; }
         #cart-count { position: absolute; top: -2px; right: -2px; background: #fff; color: #ee4d2d; border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 800; border: 2px solid #ee4d2d; }
         #modal-carrinho { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: none; justify-content: center; align-items: flex-end; }
         .conteudo-modal { background: #f4f4f4; width: 100%; max-width: 500px; max-height: 80vh; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; }
