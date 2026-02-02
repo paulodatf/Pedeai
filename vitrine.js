@@ -6,10 +6,25 @@ let lojistaInfoCache = null;
 window.tamanhoSelecionadoAtual = null;
 
 function otimizarURL(url, width = 400) {
-    if (!url || typeof url !== 'string') return url;
-    if (!url.includes('cloudinary.com')) return url;
-    return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
+    if (!url || typeof url !== 'string') {
+        return "https://via.placeholder.com/300";
+    }
+
+    if (!url.includes('cloudinary.com/image/upload')) {
+        return url;
+    }
+
+    // evita reaplicar otimização
+    if (url.includes('f_auto') || url.includes('q_auto')) {
+        return url;
+    }
+
+    return url.replace(
+        '/image/upload/',
+        `/image/upload/f_auto,q_auto:eco,w_${width},c_limit/`
+    );
 }
+
 
 // Função para gerar link do produto
 function gerarLinkVitrine(sellerId, prodId, modo) {
@@ -165,9 +180,9 @@ const funcAbrirIntermediario = `window.abrirConfigComida('${d.id}', false, true)
 
                     htmlDestaque = `
                         <div class="destaque-container" style="background: #fff;">
-                            <div class="slider-wrapper" style="width: 100vw; aspect-ratio: 1/1; position: relative; overflow: hidden;">
+                            <div class="slider-wrapper" style="width: 100vw; aspect-ratio: 1/1; position: relative; overflow: hidden; background: #fff;">
                                 <div class="image-slider" id="slider-main" style="display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none;">
-                                    ${fotos.map(url => `<img src="${otimizarURL(url, 800)}" style="width: 100vw; height: 100vw; object-fit: cover; flex-shrink: 0; scroll-snap-align: start;">`).join('')}
+                                    ${fotos.map(url => `<img src="${otimizarURL(url, 800)}" style="width: 100vw; height: 100vw; object-fit: contain; background: #fff; flex-shrink: 0; scroll-snap-align: start;">`).join('')}
                                 </div>
                                 <div class="photo-counter" style="position: absolute; bottom: 15px; right: 15px; background: rgba(0,0,0,0.6); color: #fff; padding: 4px 12px; border-radius: 15px; font-size: 12px;">
                                     <span id="counter">1</span>/${fotos.length}
@@ -188,12 +203,19 @@ const funcAbrirIntermediario = `window.abrirConfigComida('${d.id}', false, true)
                         </div>`;
                 }
             } else if (p.owner === sellerId) {
+                // Ajuste cirúrgico: 'contain' apenas para produtos comuns, 'cover' para gourmet
+                let estiloImagemCustom = 'width: 100%; aspect-ratio: 1/1; object-fit: cover;';
+                
+                if (modo !== 'gourmet') {
+                    estiloImagemCustom = 'width: 100%; aspect-ratio: 1/1; object-fit: contain; background: #fcfcfc; padding: 4px;';
+                }
+
                 htmlGridLojista += `
                     <div class="card-menor" onclick="window.location.href='vitrine-lojista.html?seller=${sellerId}&product=${d.id}&modo=${modo}'" style="background: #fff; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; border: 1px solid #eee;">
-                        <img src="${otimizarURL(imgCapaOtimizada, 300)}" style="width: 100%; aspect-ratio: 1/1; object-fit: cover;">
+                        <img src="${otimizarURL(imgCapaOtimizada, 300)}" style="${estiloImagemCustom}">
                         <div style="padding: 8px;">
-                            <div style="font-size: 12px; color: #333; height: 32px; overflow: hidden; line-height: 1.3; margin-bottom: 4px;">${p.nome}</div>
-                            <div style="font-weight: bold; color: #ee4d2d; font-size: 14px;">R$ ${p.preco}</div>
+                            <div style="font-size: 12px; color: #333; font-weight: 500; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 32px;">${p.nome}</div>
+                            <div style="color: #ee4d2d; font-weight: bold; font-size: 14px;">R$ ${p.preco}</div>
                         </div>
                     </div>`;
             }

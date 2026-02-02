@@ -95,7 +95,6 @@ async function inicializar() {
                 ...data, 
                 nomeLoja: lojista?.nomeLoja || 'Loja Parceira',
                 planoLojista: lojista?.planoAtivo || 'basico',
-                // Se o lojista não existe no banco, isLojistaAprovado será false (impede a exibição)
                 isLojistaAprovado: lojista ? regras.podeExibirProdutos : false,
                 isProdutoAtivo: data.status !== 'inativo' && data.visivel !== false
             });
@@ -154,7 +153,13 @@ function renderizarCarrosselAutomatico() {
 
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
     track.innerHTML = data.map(p => {
-        const img = otimizarURL(p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/150", 300);
+        const imgRaw = p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/150";
+        
+        // c_lpad garante o produto inteiro + b_auto:predominant cria o fundo sem bordas
+        const img = imgRaw.includes('cloudinary.com') 
+            ? imgRaw.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_300,h_300,c_lpad,b_auto:predominant$2`)
+            : imgRaw;
+
         return `<div class="banner-box" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')"><img src="${img}" loading="lazy"><div class="banner-overlay"><span class="banner-price">R$ ${p.preco}</span></div></div>`;
     }).join('');
     
@@ -225,7 +230,6 @@ function renderizarProdutos() {
         const imgRaw = p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/300";
         const img = otimizarURL(imgRaw, 400);
         
-        // Link dinâmico para garantir que o carrinho saiba de onde o produto veio
         const linkProduto = `${window.location.origin}${window.location.pathname.replace('index.html', '')}vitrine-lojista.html?seller=${p.owner}&product=${p.id}&modo=${paramModo}`;
         const nomeSanitizado = p.nome.replace(/'/g, "\\'");
         const descSanitizada = (p.descricao || "").replace(/'/g, "\\'").replace(/\n/g, " ");
@@ -247,7 +251,6 @@ function renderizarProdutos() {
             const isRoupa = p.tipoProduto === 'roupa';
             const temTamanhos = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) || (p.numeracoes && p.numeracoes.trim() !== "");
             
-            // AJUSTE: Passando link e descrição (vazia ou real) para o carrinho
             let btnHTML = (isRoupa && temTamanhos) ? `<button class="btn-add-main">Escolher opções</button>` : 
                 `<button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${nomeSanitizado}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgRaw}', '${linkProduto}', '${descSanitizada}')">Adicionar</button>`;
             

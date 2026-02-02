@@ -11,10 +11,25 @@ let lojistaInfoCache = null;
 window.tamanhoSelecionadoAtual = null;
 
 function otimizarURL(url, width = 400) {
-    if (!url || typeof url !== 'string') return url || "https://via.placeholder.com/300";
-    if (!url.includes('cloudinary.com')) return url;
-    return url.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_${width},c_limit$2`);
+    if (!url || typeof url !== 'string') {
+        return "https://via.placeholder.com/300";
+    }
+
+    if (!url.includes('cloudinary.com/image/upload')) {
+        return url;
+    }
+
+    // evita reaplicar otimização
+    if (url.includes('f_auto') || url.includes('q_auto')) {
+        return url;
+    }
+
+    return url.replace(
+        '/image/upload/',
+        `/image/upload/f_auto,q_auto:eco,w_${width},c_limit/`
+    );
 }
+
 
 function gerarLinkDestaque(prodId) {
     const base = window.location.origin + window.location.pathname;

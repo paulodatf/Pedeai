@@ -49,7 +49,10 @@
 
     <div class="form-container" id="areaLogin">
         <input type="email" id="emailL" placeholder="E-mail">
-        <input type="password" id="senhaL" placeholder="Senha">
+        <div style="position: relative; width: 100%;">
+    <input type="password" id="senhaL" placeholder="Senha" style="padding-right: 40px;">
+    <i class="fas fa-eye" id="toggleLogin" style="position: absolute; right: 10px; top: 12px; cursor: pointer; color: rgba(255,255,255,0.7); font-size: 18px;"></i>
+</div>
         <button id="btnEntrar" class="btn-main">ENTRAR NO PAINEL</button>
         <a href="cadastro.html" class="link-cadastrar">Cadastrar-se</a>
     </div>
@@ -62,7 +65,13 @@
 
 <script type="module">
     import { realizarLogin } from './login.js';
-
+    
+document.getElementById('toggleLogin').addEventListener('click', function() {
+    const input = document.getElementById('senhaL');
+    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+    input.setAttribute('type', type);
+    this.classList.toggle('fa-eye-slash');
+});
     document.getElementById('btnEntrar').addEventListener('click', async () => {
         const email = document.getElementById('emailL').value.trim();
         const senha = document.getElementById('senhaL').value.trim();
