@@ -98,6 +98,9 @@ function atualizarUIPerfil() {
 
     // Inputs
     document.getElementById('inputNomeLoja').value = nomeCtx;
+    if(document.getElementById('inputWhatsLoja')) {
+        document.getElementById('inputWhatsLoja').value = userData.whatsapp || "";
+    }
     const preview = document.getElementById('previewPerfil');
     if(preview && fotoCtx) {
         preview.style.backgroundImage = `url(${fotoCtx})`;
@@ -171,6 +174,13 @@ if (userData.planoAtivo === 'basico' || !userData.planoAtivo) {
     // Garante que o texto do botão "Publicar Novo em..." reflita o tema salvo
     const txtBtn = document.getElementById('txtBtnPublicarContexto');
     if(txtBtn) txtBtn.innerText = contextoAtual.toUpperCase();
+
+    // CORREÇÃO DE CONTEXTO: Força o formulário a carregar os campos do setor escolhido
+    const selectCat = document.getElementById('pCategoria');
+    if(selectCat) {
+        selectCat.value = contextoAtual;
+        if (window.toggleFormFields) window.toggleFormFields();
+    }
 
 } else {
     // Premium/VIP continuam vendo o seletor normal
@@ -247,6 +257,16 @@ document.getElementById('btnSalvarNome').onclick = async () => {
         atualizarUIPerfil();
         alert("Nome atualizado para este contexto!");
     } catch (e) { alert("Erro ao atualizar nome."); }
+};
+
+document.getElementById('btnSalvarWhats').onclick = async () => {
+    const novoWhats = document.getElementById('inputWhatsLoja').value.replace(/\D/g, '');
+    if(novoWhats.length < 10) return alert("Digite o WhatsApp com DDD (apenas números)!");
+    try {
+        await updateDoc(doc(db, "usuarios", userId), { whatsapp: novoWhats });
+        userData.whatsapp = novoWhats;
+        alert("WhatsApp de vendas atualizado!");
+    } catch (e) { alert("Erro ao atualizar WhatsApp."); }
 };
 
 document.getElementById('btn-salvar-montar').onclick = async () => {
@@ -619,13 +639,15 @@ window.abrirSuporteDinamico = async function() {
 async function escolherTemaInicial() {
     // Cria um fundo branco por cima de tudo para a escolha
     const overlay = document.createElement('div');
-    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;";
+    overlay.style = "position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;box-sizing:border-box;";
     overlay.innerHTML = `
-        <h2>Seu plano é Básico</h2>
-        <p>Escolha em qual setor deseja atuar.<br><b>Esta escolha não poderá ser alterada depois.</b></p>
-        <div style="display:flex; gap:20px; margin-top:20px;">
-            <button onclick="definirTema('Geral')" style="padding:20px; border:2px solid #ee4d2d; border-radius:10px; background:none; cursor:pointer; font-weight:bold;">🛒 Produtos Gerais<br>(Vitrine)</button>
-            <button onclick="definirTema('Comida')" style="padding:20px; border:2px solid #ffc107; border-radius:10px; background:none; cursor:pointer; font-weight:bold;">🍔 Comida / Delivery<br>(Cardápio)</button>
+        <div style="max-width:400px; width:100%;">
+            <h2>Seu plano é Básico</h2>
+            <p>Escolha em qual setor deseja atuar.<br><b>Esta escolha poderá ser alterada futuramente entrando em contato com o suporte.</b></p>
+            <div style="display:flex; flex-direction:column; gap:15px; margin-top:20px;">
+                <button onclick="definirTema('Geral')" style="padding:20px; border:2px solid #ee4d2d; border-radius:10px; background:none; cursor:pointer; font-weight:bold; width:100%;">🛒 Produtos Gerais<br>(Vitrine)</button>
+                <button onclick="definirTema('Comida')" style="padding:20px; border:2px solid #ffc107; border-radius:10px; background:none; cursor:pointer; font-weight:bold; width:100%;">🍔 Comida / Delivery<br>(Cardápio)</button>
+            </div>
         </div>
     `;
     document.body.appendChild(overlay);
