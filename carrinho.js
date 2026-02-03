@@ -126,9 +126,8 @@ window.finalizarGrupoLojista = async (ownerId) => {
     window.atualizarIconeCarrinho();
     window.abrirModalCarrinho();
     
-     const fone = itensLoja[0].whatsapp.replace(/\D/g, '');
-    const urlFinal = `https://wa.me/55${fone}?text=${encodeURIComponent(texto)}`;
-    window.open(urlFinal, '_blank');
+     const urlFinal = `https://wa.me/55${foneFinal}?text=${encodeURIComponent(texto)}`;
+    window.location.href = urlFinal;
 };
 
 // 5. INTERFACE E UI
