@@ -127,7 +127,7 @@ window.finalizarGrupoLojista = async (ownerId) => {
     window.abrirModalCarrinho();
     
     const urlFinal = `https://wa.me/55${foneFinal}?text=${encodeURIComponent(texto)}`;
-    window.open(urlFinal, '_blank');
+    window.location.href = urlFinal;
 };
 
 // 5. INTERFACE E UI
