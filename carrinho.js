@@ -208,16 +208,31 @@ function inicializarCarrinho() {
         .qty-btn-cart { border: 1px solid #ddd; background: #f9f9f9; width: 24px; height: 24px; border-radius: 4px; cursor: pointer; }
         .btn-finish-store { width: 100%; background: #25d366; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; margin-top: 5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     </style>`;
+    // Função para fechar o modal bloqueando o "clique fantasma" no Safari
+    window.fecharModalCarrinho = (e) => {
+        if (e.target.id === 'modal-carrinho' || e.currentTarget.classList.contains('fa-times')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const modal = document.getElementById('modal-carrinho');
+            if (modal) modal.style.display = 'none';
+            
+            // Bloqueia interações no fundo por 400ms para o Safari não clicar no produto atrás
+            document.body.style.pointerEvents = 'none';
+            setTimeout(() => { document.body.style.pointerEvents = 'auto'; }, 400);
+        }
+    };
+
     const html = `
         <div id="carrinho-flutuante" onclick="abrirModalCarrinho()">
             <i class="fas fa-shopping-cart" style="font-size: 24px;"></i>
             <span id="cart-count">0</span>
         </div>
-        <div id="modal-carrinho" ontouchstart="if(event.target == this) this.style.display='none'" onclick="if(event.target == this) this.style.display='none'">
+        <div id="modal-carrinho" onclick="window.fecharModalCarrinho(event)">
             <div class="conteudo-modal">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <b style="font-size:18px;">🛒 Meu Carrinho</b>
-                    <i class="fas fa-times" ontouchstart="document.getElementById('modal-carrinho').style.display='none'" onclick="event.preventDefault();" style="cursor:pointer; padding:10px;"></i>
+                    <i class="fas fa-times" onclick="window.fecharModalCarrinho(event)" style="cursor:pointer; padding:10px;"></i>
                 </div>
                 <div id="lista-carrinho-lojas"></div>
             </div>
