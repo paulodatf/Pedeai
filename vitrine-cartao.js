@@ -120,9 +120,12 @@ async function carregarDadosEProdutos() {
                         </div><hr style="border:0; border-top:8px solid #eee; margin:0;">`;
                 }
             } else {
+                // Aplica lógica visual idêntica ao vitrine.js: cover para gourmet, contain para outros
+                const estiloImagemGourmet = modo === 'gourmet' ? 'object-fit: cover; padding: 0; background: none;' : '';
+                
                 htmlGridLojista += `
                     <div class="card-p" onclick="window.location.href='?lojista=${lojistaId}&product=${d.id}&modo=${modo}'">
-                        <img src="${otimizarURL(fotos[0], 400)}" loading="lazy">
+                        <img src="${otimizarURL(fotos[0], 400)}" loading="lazy" style="${estiloImagemGourmet}">
                         <div class="card-p-info">
                             <div class="card-p-name">${p.nome}</div>
                             <div class="card-p-price">R$ ${p.preco}</div>
