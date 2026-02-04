@@ -252,7 +252,7 @@ function renderizarProdutos() {
             const temTamanhos = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) || (p.numeracoes && p.numeracoes.trim() !== "");
             
             let btnHTML = (isRoupa && temTamanhos) ? `<button class="btn-add-main">Escolher opções</button>` : 
-                `<button class="btn-add-main" onclick="event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${nomeSanitizado}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgRaw}', '${linkProduto}', '${descSanitizada}')">Adicionar</button>`;
+                `<button class="btn-add-main" onclick="event.preventDefault(); event.stopPropagation(); window.adicionarAoCarrinho('${p.id}', '${nomeSanitizado}', '${p.preco}', '${p.owner}', '${p.whatsapp}', '${imgRaw}', '${linkProduto}', '${descSanitizada}')">Adicionar</button>`;
             
             return `<div class="product-card" onclick="navegarParaProduto('${p.owner}', '${p.id}', '${paramModo}')">
                     <div class="img-box"><img src="${img}" loading="lazy"></div>
@@ -303,4 +303,13 @@ document.getElementById('inputBusca')?.addEventListener('input', (e) => {
     renderizarProdutos();
 });
 
+document.addEventListener('touchstart', function() {}, {passive: true});
+document.querySelectorAll('button, .filter-chip, .nav-item').forEach(el => {
+    el.addEventListener('touchend', function(e) {
+        const agora = Date.now();
+        const ultimo = el.dataset.lastTap || 0;
+        if (agora - ultimo < 300 && agora - ultimo > 0) e.preventDefault();
+        el.dataset.lastTap = agora;
+    }, {passive: false});
+});
 inicializar();
