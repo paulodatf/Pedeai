@@ -127,7 +127,12 @@ window.finalizarGrupoLojista = async (ownerId) => {
     window.abrirModalCarrinho();
     
      const urlFinal = `https://wa.me/55${foneFinal}?text=${encodeURIComponent(texto)}`;
-    window.location.href = urlFinal;
+    
+    // Ajuste Safari: Simula clique em link real para evitar bloqueio de redirecionamento
+    const link = document.createElement('a');
+    link.href = urlFinal;
+    link.setAttribute('target', '_top');
+    link.click();
 };
 
 // 5. INTERFACE E UI
@@ -186,15 +191,15 @@ window.abrirModalCarrinho = () => {
                                 <div class="cart-item-name">${i.nome}</div>
                                 <div class="cart-item-price">R$ ${i.preco}</div>
                                 <div class="qty-control-cart" style="display:flex; align-items:center; margin-top:5px; gap:10px;">
-                                    <button onclick="alterarQuantidadeCarrinho('${i.id}', -1)" class="qty-btn-cart">-</button>
+                                    <button ontouchstart="alterarQuantidadeCarrinho('${i.id}', -1)" onclick="event.preventDefault();" class="qty-btn-cart">-</button>
                                     <span style="font-size:13px; font-weight:bold;">${i.qtd}</span>
-                                    <button onclick="alterarQuantidadeCarrinho('${i.id}', 1)" class="qty-btn-cart">+</button>
+                                    <button ontouchstart="alterarQuantidadeCarrinho('${i.id}', 1)" onclick="event.preventDefault();" class="qty-btn-cart">+</button>
                                 </div>
                             </div>
-                            <i class="fas fa-trash-alt cart-remove" onclick="removerDoCarrinho('${i.id}')"></i>
+                            <i class="fas fa-trash-alt cart-remove" ontouchstart="removerDoCarrinho('${i.id}')" onclick="event.preventDefault();"></i>
                         </div>
                     `).join('')}
-                    <button class="btn-finish-store" onclick="finalizarGrupoLojista('${owner}')">
+                    <button class="btn-finish-store" ontouchstart="finalizarGrupoLojista('${owner}')" onclick="event.preventDefault();">
                         <i class="fab fa-whatsapp"></i> Enviar Pedido
                     </button>
                 </div>`;
@@ -209,6 +214,10 @@ function inicializarCarrinho() {
         return;
     }
     const css = `<style>
+        #carrinho-flutuante, .btn-finish-store, .qty-btn-cart, .cart-remove, .fa-times { 
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent; 
+        }
         #carrinho-flutuante { position: fixed; right: 25px; bottom: 110px !important; width: 60px; height: 60px; background: #ee4d2d; border-radius: 50%; color: white; display: none; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 9999; cursor: pointer; transition: transform 0.2s, opacity 0.3s; }
         #cart-count { position: absolute; top: -2px; right: -2px; background: #fff; color: #ee4d2d; border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 800; border: 2px solid #ee4d2d; }
         #modal-carrinho { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: none; justify-content: center; align-items: flex-end; }
@@ -228,11 +237,11 @@ function inicializarCarrinho() {
             <i class="fas fa-shopping-cart" style="font-size: 24px;"></i>
             <span id="cart-count">0</span>
         </div>
-        <div id="modal-carrinho" onclick="if(event.target == this) this.style.display='none'">
+        <div id="modal-carrinho" ontouchstart="if(event.target == this) this.style.display='none'" onclick="if(event.target == this) this.style.display='none'">
             <div class="conteudo-modal">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
                     <b style="font-size:18px;">🛒 Meu Carrinho</b>
-                    <i class="fas fa-times" onclick="document.getElementById('modal-carrinho').style.display='none'" style="cursor:pointer;"></i>
+                    <i class="fas fa-times" ontouchstart="document.getElementById('modal-carrinho').style.display='none'" onclick="event.preventDefault();" style="cursor:pointer; padding:10px;"></i>
                 </div>
                 <div id="lista-carrinho-lojas"></div>
             </div>
