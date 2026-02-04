@@ -636,23 +636,20 @@ window.gerarLinkCartaoVisita = function(modo) {
 };
 // AJUSTE CIRÚRGICO: Função de Suporte Global via Firebase
 window.abrirSuporteDinamico = async function() {
-    let numeroSuporte = "5511999999999"; // Número padrão caso o banco falhe
-    
+    const mensagem = encodeURIComponent("Olá! Preciso de ajuda com meu painel.");
+    let numeroSuporte = "5511999999999";
+
     try {
-        // Busca o número que o Admin salvou no Firebase
-        const docRef = doc(db, "configuracoes", "suporte");
-        const docSnap = await getDoc(docRef);
-        
+        const docSnap = await getDoc(doc(db, "configuracoes", "suporte"));
         if (docSnap.exists() && docSnap.data().numero) {
             numeroSuporte = docSnap.data().numero;
         }
-    } catch (e) {
-        console.error("Erro ao carregar suporte global:", e);
-    }
+    } catch (e) { console.error(e); }
+
+    const url = `https://wa.me/${numeroSuporte.replace(/\D/g, '')}?text=${mensagem}`;
     
-    const numLimpo = numeroSuporte.replace(/\D/g, '');
-    const mensagem = encodeURIComponent("Olá! Preciso de ajuda com meu painel.");
-    window.open(`https://wa.me/${numLimpo}?text=${mensagem}`, '_blank');
+    // No iOS Safari, window.location.href é mais confiável que window.open dentro de async
+    window.location.href = url;
 };
 async function escolherTemaInicial() {
     // Cria um fundo branco por cima de tudo para a escolha
