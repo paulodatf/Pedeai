@@ -77,7 +77,7 @@ window.finalizarGrupoLojista = (ownerId) => {
     // Usamos o WhatsApp já armazenado no item para ação imediata.
     let foneFinal = itensLoja[0].whatsapp.replace(/\D/g, '');
 
-    let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
+    let texto = `📌 *NOVO PEDIDO RECEBIDO*\n`;
     texto += `────────────────────\n\n`;
     
     let total = 0;
@@ -85,18 +85,28 @@ window.finalizarGrupoLojista = (ownerId) => {
         const precoLimpo = parseFloat(item.preco.replace('R$', '').replace(/\./g, '').replace(',', '.'));
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
-        texto += `*🛍️ Produto:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
+
+        texto += `🛍️ *Produto:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
+        
         if (item.descricao && item.descricao.trim() !== "") {
-            texto += `*📄 Descrição:* _${item.descricao}_\n`;
+            // Converte vírgulas ou quebras de linha em tópicos para melhor visualização
+            const linhasDescricao = item.descricao.split(/[,\n]/).filter(d => d.trim() !== "");
+            texto += `📄 *Descrição:*\n`;
+            linhasDescricao.forEach(linha => {
+                texto += `• ${linha.trim()}\n`;
+            });
         }
-        texto += `*💰 Valor:* R$ ${item.preco}\n\n`;
+        
+        texto += `\n💰 *Valor unitário:* R$ ${item.preco}\n\n`;
+        
         if (item.linkProduto) {
-            texto += `*🔗 Ver produto:*\n👉 Toque para visualizar o item\n${item.linkProduto}\n`;
+            texto += `🔗 *Ver produto:*\n👉 Toque para visualizar\n${item.linkProduto}\n`;
         }
+        
         texto += `────────────────────\n`;
     });
 
-    texto += `\n*💵 Total: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
+    texto += `\n💵 *Total do pedido: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
     texto += `_Pedido gerado via catálogo online_\n*Pede Aí*`;
 
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
