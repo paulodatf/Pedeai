@@ -266,6 +266,11 @@
         <button id="nav-classifieds" class="nav-item" onclick="setAppMode('classifieds', this)">
             <i class="fas fa-bullhorn"></i><span>Anúncios</span>
         </button>
+        <div id="install-container" style="display:none; padding: 10px; background: #fff; border-top: 1px solid #eee; position: fixed; bottom: 70px; width: 100%; z-index: 1900; text-align: center;">
+        <button id="btnInstall" style="background: var(--shopee-orange); color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; width: 90%;">
+            <i class="fas fa-download"></i> INSTALAR APLICATIVO
+        </button>
+    </div>
     </nav>
 
     <script type="module" src="./index.js"></script>
@@ -301,6 +306,28 @@
         })();
     </script>
 <script>
+let deferredPrompt;
+const installContainer = document.getElementById('install-container');
+const btnInstall = document.getElementById('btnInstall');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  installContainer.style.display = 'block';
+});
+
+btnInstall.addEventListener('click', () => {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then((choiceResult) => {
+      if (choiceResult.outcome === 'accepted') {
+        installContainer.style.display = 'none';
+      }
+      deferredPrompt = null;
+    });
+  }
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js')
