@@ -68,28 +68,14 @@ window.removerDoCarrinho = (id) => {
 };
 
 // 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP - FORMATO ATUALIZADO)
-// 4. FINALIZAR PEDIDO (ENVIO PARA WHATSAPP - FORMATO ATUALIZADO)
-window.finalizarGrupoLojista = async (ownerId) => {
+window.finalizarGrupoLojista = (ownerId) => {
     let carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     const itensLoja = carrinho.filter(i => i.owner === ownerId);
     if (itensLoja.length === 0) return;
 
-    let foneFinal = "";
-    try {
-        // Busca o WhatsApp em tempo real da coleção usuarios para garantir o número atualizado
-        const { doc, getDoc, getFirestore } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js");
-        const db = getFirestore();
-        const userDoc = await getDoc(doc(db, "usuarios", ownerId));
-        if (userDoc.exists() && userDoc.data().whatsapp) {
-            foneFinal = userDoc.data().whatsapp.replace(/\D/g, '');
-        } else {
-            // Fallback para o número do primeiro item caso o documento não seja encontrado
-            foneFinal = itensLoja[0].whatsapp.replace(/\D/g, '');
-        }
-    } catch (e) {
-        console.error("Erro ao buscar WhatsApp em tempo real:", e);
-        foneFinal = itensLoja[0].whatsapp.replace(/\D/g, '');
-    }
+    // Removemos o async/await para garantir que o Safari iOS não bloqueie o redirecionamento.
+    // Usamos o WhatsApp já armazenado no item para ação imediata.
+    let foneFinal = itensLoja[0].whatsapp.replace(/\D/g, '');
 
     let texto = `*📌 NOVO PEDIDO RECEBIDO*\n`;
     texto += `────────────────────\n\n`;
@@ -99,26 +85,19 @@ window.finalizarGrupoLojista = async (ownerId) => {
         const precoLimpo = parseFloat(item.preco.replace('R$', '').replace(/\./g, '').replace(',', '.'));
         const subtotal = precoLimpo * item.qtd;
         total += subtotal;
-
         texto += `*🛍️ Produto:* ${item.qtd}x ${item.nome.toUpperCase()}\n`;
-        
         if (item.descricao && item.descricao.trim() !== "") {
             texto += `*📄 Descrição:* _${item.descricao}_\n`;
         }
-        
         texto += `*💰 Valor:* R$ ${item.preco}\n\n`;
-        
         if (item.linkProduto) {
-            texto += `*🔗 Ver produto:*\n`;
-            texto += `👉 Toque para visualizar o item\n`;
-            texto += `${item.linkProduto}\n`;
+            texto += `*🔗 Ver produto:*\n👉 Toque para visualizar o item\n${item.linkProduto}\n`;
         }
         texto += `────────────────────\n`;
     });
 
     texto += `\n*💵 Total: R$ ${total.toFixed(2).replace('.', ',')}*\n\n`;
-    texto += `_Pedido gerado via catálogo online_\n`;
-    texto += `*Pede Aí*`;
+    texto += `_Pedido gerado via catálogo online_\n*Pede Aí*`;
 
     const novoCarrinho = carrinho.filter(i => i.owner !== ownerId);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(novoCarrinho));
@@ -126,13 +105,10 @@ window.finalizarGrupoLojista = async (ownerId) => {
     window.atualizarIconeCarrinho();
     window.abrirModalCarrinho();
     
-     const urlFinal = `https://wa.me/55${foneFinal}?text=${encodeURIComponent(texto)}`;
+    const urlFinal = `https://wa.me/55${foneFinal}?text=${encodeURIComponent(texto)}`;
     
-    // Ajuste Safari: Simula clique em link real para evitar bloqueio de redirecionamento
-    const link = document.createElement('a');
-    link.href = urlFinal;
-    link.setAttribute('target', '_top');
-    link.click();
+    // No Safari iOS, window.location.assign é mais confiável para deep-links (WhatsApp) após o primeiro uso.
+    window.location.assign(urlFinal);
 };
 
 // 5. INTERFACE E UI
@@ -199,7 +175,7 @@ window.abrirModalCarrinho = () => {
                             <i class="fas fa-trash-alt cart-remove" ontouchstart="removerDoCarrinho('${i.id}')" onclick="event.preventDefault();"></i>
                         </div>
                     `).join('')}
-                    <button class="btn-finish-store" ontouchstart="finalizarGrupoLojista('${owner}')" onclick="event.preventDefault();">
+                    <button class="btn-finish-store" onclick="finalizarGrupoLojista('${owner}')">
                         <i class="fab fa-whatsapp"></i> Enviar Pedido
                     </button>
                 </div>`;
