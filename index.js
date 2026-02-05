@@ -73,6 +73,14 @@ function aplicarAlgoritmoVisibilidade(lista) {
 }
 
 async function inicializar() {
+    const removerSplash = () => {
+        const splash = document.getElementById('pedeai-splash');
+        if (splash) {
+            splash.classList.add('splash-hidden');
+            setTimeout(() => splash.remove(), 500);
+        }
+    };
+
     try {
         const snapProdutos = await getDocs(collection(db, "produtos"));
         const snapUsuarios = await getDocs(collection(db, "usuarios"));
@@ -128,7 +136,12 @@ async function inicializar() {
             isReturning = false; 
         }
 
-    } catch (e) { console.error("Erro:", e); }
+        setTimeout(removerSplash, 300);
+
+    } catch (e) { 
+        console.error("Erro ao inicializar:", e); 
+        removerSplash();
+    }
 }
 
 function renderizarCarrosselAutomatico() {
@@ -146,16 +159,16 @@ function renderizarCarrosselAutomatico() {
     const data = aplicarAlgoritmoVisibilidade(poolTurbo).slice(0, 20);
     
     if (data.length === 0) {
-        document.getElementById('featuredStrip').style.display = 'none';
+        const strip = document.getElementById('featuredStrip');
+        if (strip) strip.style.display = 'none';
         return;
     }
-    document.getElementById('featuredStrip').style.display = 'block';
+    const strip = document.getElementById('featuredStrip');
+    if (strip) strip.style.display = 'block';
 
     const paramModo = modoAtual === 'restaurants' ? 'gourmet' : 'produto';
     track.innerHTML = data.map(p => {
         const imgRaw = p.foto || (p.fotos && p.fotos[0]) || "https://via.placeholder.com/150";
-        
-        // c_lpad garante o produto inteiro + b_auto:predominant cria o fundo sem bordas
         const img = imgRaw.includes('cloudinary.com') 
             ? imgRaw.replace(/\/upload\/(.*?)(\/v\d+\/)/, `/upload/f_auto,q_auto:eco,w_300,h_300,c_lpad,b_auto:predominant$2`)
             : imgRaw;
@@ -312,4 +325,5 @@ document.querySelectorAll('button, .filter-chip, .nav-item').forEach(el => {
         el.dataset.lastTap = agora;
     }, {passive: false});
 });
+
 inicializar();
