@@ -24,7 +24,7 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Fetch - Estratégia Network First para documentos e scripts para evitar travas
+// Fetch - Estratégia Network First para documentos e scripts para evitar travas no carregamento
 self.addEventListener('fetch', (e) => {
   if (e.request.mode === 'navigate' || e.request.destination === 'script') {
     e.respondWith(
