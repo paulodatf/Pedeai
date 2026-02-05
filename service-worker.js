@@ -24,9 +24,15 @@ self.addEventListener('activate', (e) => {
   self.clients.claim();
 });
 
-// Fetch
+// Fetch - Estratégia Network First para documentos e scripts para evitar travas
 self.addEventListener('fetch', (e) => {
-  e.respondWith(
-    caches.match(e.request).then(resp => resp || fetch(e.request))
-  );
+  if (e.request.mode === 'navigate' || e.request.destination === 'script') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match(e.request))
+    );
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(resp => resp || fetch(e.request))
+    );
+  }
 });
