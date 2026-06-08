@@ -626,7 +626,25 @@ window.filtrarPorPalavra = (termo, elemento) => {
     filtroChip = novoFiltro;
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     elemento.classList.add('active');
-    filtrarCards();
+
+    const overlay = document.getElementById('filter-overlay');
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    const corAnterior = themeMeta ? themeMeta.getAttribute('content') : '#ee4d2d';
+
+    if (overlay) { overlay.style.display = 'flex'; }
+    if (themeMeta) { themeMeta.setAttribute('content', '#ffffff'); }
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            filtrarCards();
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (overlay) { overlay.style.display = 'none'; }
+                    if (themeMeta) { themeMeta.setAttribute('content', corAnterior); }
+                });
+            });
+        });
+    });
 };
 
 window.addEventListener('changeMode', (e) => {

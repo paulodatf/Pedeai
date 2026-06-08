@@ -63,6 +63,7 @@
     top: 0; 
     z-index: 1000; 
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    isolation: auto;
 }
         .header-top { display: flex; justify-content: space-between; align-items: center; color: white; max-width: 1200px; margin: 0 auto; }
         
@@ -152,13 +153,7 @@
         }
         .quick-filters::-webkit-scrollbar { display: none; }
 
-        .card-oculto {
-    visibility: hidden;
-    pointer-events: none;
-    opacity: 0;
-}
-
-.filter-chip { 
+        .filter-chip { 
             display: inline-block; padding: 8px 18px; background: #f2f2f2; 
             border-radius: 20px; font-size: 13px; font-weight: 500; color: #555; 
             margin-left: 10px; cursor: pointer;
@@ -357,7 +352,7 @@
         <div class="carousel-track" id="carouselTrack" style="-webkit-overflow-scrolling: touch;"></div>
     </div>
 
-    <div class="quick-filters" id="chipContainer" style="top: 104px; -webkit-overflow-scrolling: touch;"></div>
+    <div class="quick-filters" id="chipContainer" style="top: 104px; -webkit-overflow-scrolling: touch; transform: translateZ(0); will-change: transform;"></div>
 
     <div class="container" id="products-container">
         <div id="grid-produtos" class="grid-container"></div>
@@ -602,6 +597,16 @@
             });
         })();
     </script>
+    <div id="filter-overlay" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#ffffff; align-items:center; justify-content:center; z-index:999999;">
+    <div style="display:flex; gap:10px; align-items:center;">
+        <span style="width:10px;height:10px;border-radius:50%;background:#ee4d2d;display:inline-block;animation:fd 0.8s ease-in-out infinite;"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#ee4d2d;display:inline-block;animation:fd 0.8s ease-in-out 0.25s infinite;"></span>
+        <span style="width:10px;height:10px;border-radius:50%;background:#ee4d2d;display:inline-block;animation:fd 0.8s ease-in-out 0.5s infinite;"></span>
+    </div>
+</div>
+<style>
+@keyframes fd { 0%,100%{opacity:0.15;transform:scale(0.75)} 50%{opacity:1;transform:scale(1.25)} }
+</style>
 <script>
 let deferredPrompt;
 const installContainer = document.getElementById('install-container');
