@@ -591,8 +591,12 @@ function filtrarCards() {
             }
         }
 
-        card.style.display = visivel ? '' : 'none';
-        if (visivel) visiveisCount++;
+        if (visivel) {
+            card.classList.remove('card-oculto');
+            visiveisCount++;
+        } else {
+            card.classList.add('card-oculto');
+        }
     });
 
     const emptyExistente = grid.querySelector('[data-empty-state]');
@@ -621,7 +625,7 @@ window.filtrarPorPalavra = (termo, elemento) => {
     filtroChip = novoFiltro;
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     elemento.classList.add('active');
-    filtrarCards();
+    renderizarProdutos();
 };
 
 window.addEventListener('changeMode', (e) => {
