@@ -588,8 +588,10 @@ function filtrarCards() {
         if (visivel && filtroChip === 'promocao') {
             if (promocao !== 'sim') visivel = false;
         } else if (visivel && filtroChip && filtroChip !== '') {
-            const keywords = MAPAS_FILTROS[modoAtual][filtroChip] || [];
-            if (!keywords.some(k => chip.includes(normalizar(k))) && !chip.includes(normalizar(filtroChip))) {
+            const chavesMapa = Object.keys(MAPAS_FILTROS[modoAtual] || {});
+            const chaveReal = chavesMapa.find(k => normalizar(k) === filtroChip) || filtroChip;
+            const keywords = MAPAS_FILTROS[modoAtual][chaveReal] || [];
+            if (!keywords.some(k => chip.includes(normalizar(k))) && !chip.includes(filtroChip)) {
                 visivel = false;
             }
         }
@@ -624,7 +626,7 @@ window.filtrarPorPalavra = (termo, elemento) => {
     filtroChip = novoFiltro;
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     elemento.classList.add('active');
-    renderizarProdutos({ silencioso: true });
+    filtrarCards();
 };
 
 window.addEventListener('changeMode', (e) => {
