@@ -634,14 +634,11 @@ window.filtrarPorPalavra = (termo, elemento) => {
     if (overlay) { overlay.style.display = 'flex'; }
     if (themeMeta) { themeMeta.setAttribute('content', '#ffffff'); }
 
-    const tempoInicio = Date.now();
     const DURACAO_MINIMA = 500;
 
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             filtrarCards();
-            const decorrido = Date.now() - tempoInicio;
-            const espera = Math.max(0, DURACAO_MINIMA - decorrido);
             setTimeout(() => {
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
@@ -649,7 +646,7 @@ window.filtrarPorPalavra = (termo, elemento) => {
                         if (themeMeta) { themeMeta.setAttribute('content', corAnterior); }
                     });
                 });
-            }, espera);
+            }, DURACAO_MINIMA);
         });
     });
 };
