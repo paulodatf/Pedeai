@@ -631,6 +631,9 @@ window.filtrarPorPalavra = (termo, elemento) => {
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     const corAnterior = themeMeta ? themeMeta.getAttribute('content') : '#ee4d2d';
 
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
     if (overlay) { overlay.style.display = 'flex'; }
     if (themeMeta) { themeMeta.setAttribute('content', '#ffffff'); }
 
