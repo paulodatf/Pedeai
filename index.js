@@ -382,15 +382,18 @@ function renderizarFiltros() {
    
 }
 
-async function renderizarProdutos() {
+async function renderizarProdutos(opcoes = {}) {
+    const { silencioso = false } = opcoes;
     const grid = document.getElementById('grid-produtos');
     if (!grid) return;
     
-    if (videoObserver) {
-        videoObserver.disconnect();
-        videoObserver = null;
+    if (!silencioso) {
+        if (videoObserver) {
+            videoObserver.disconnect();
+            videoObserver = null;
+        }
+        document.querySelectorAll('#grid-produtos video').forEach(v => v.pause());
     }
-    document.querySelectorAll('#grid-produtos video').forEach(v => v.pause());
     
     let filtrados = todosProdutos.filter(p => {
         if (!p.isLojistaAprovado) return false;
@@ -621,7 +624,7 @@ window.filtrarPorPalavra = (termo, elemento) => {
     filtroChip = novoFiltro;
     document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
     elemento.classList.add('active');
-    filtrarCards();
+    renderizarProdutos({ silencioso: true });
 };
 
 window.addEventListener('changeMode', (e) => {
