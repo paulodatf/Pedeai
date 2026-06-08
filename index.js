@@ -48,7 +48,7 @@ function renderizarMediaCard(produto, modo) {
     const videoId = `vid_${produto.id}`;
     const posterUrl = produto.videoUrl && produto.videoUrl.includes('res.cloudinary.com') ? produto.videoUrl.replace('/video/upload/', '/video/upload/so_0/').replace(/\.(mp4|mov|webm)$/i, '.jpg') : '';
     return `
-        <div style="position: relative; width: 100%; height: 100%; background: ${posterUrl ? `url('${posterUrl}') center/cover no-repeat` : '#1a1a1a'};">
+        <div style="position: relative; width: 100%; height: 230px; min-height: 230px; background: ${posterUrl ? `url('${posterUrl}') center/cover no-repeat` : '#1a1a1a'};">
             <video 
     id="${videoId}"
     data-src="${otimizarVideoURL(produto.videoUrl)}"
@@ -67,7 +67,7 @@ function renderizarMediaCard(produto, modo) {
    } else {
         const imgUrl = produto.foto || (produto.fotos && produto.fotos[0]) || "https://via.placeholder.com/300";
         const imgOptimized = otimizarURL(imgUrl, 400);
-        return `<img src="${imgOptimized}" loading="lazy" style="width: 100%; height: 230px; background: #fcfcfc; padding: 4px; border-radius: 14px 14px 0 0; display: block; transition: 0.2s; object-fit: cover;">`;
+        return `<img src="${imgOptimized}" loading="lazy" style="width: 100%; height: 230px; min-height: 230px; background: #f0f0f0; padding: 4px; border-radius: 14px 14px 0 0; display: block; transition: 0.2s; object-fit: cover;" onerror="this.style.background='#f0f0f0'">`;
     }
 }
 
