@@ -634,15 +634,22 @@ window.filtrarPorPalavra = (termo, elemento) => {
     if (overlay) { overlay.style.display = 'flex'; }
     if (themeMeta) { themeMeta.setAttribute('content', '#ffffff'); }
 
+    const tempoInicio = Date.now();
+    const DURACAO_MINIMA = 500;
+
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             filtrarCards();
-            requestAnimationFrame(() => {
+            const decorrido = Date.now() - tempoInicio;
+            const espera = Math.max(0, DURACAO_MINIMA - decorrido);
+            setTimeout(() => {
                 requestAnimationFrame(() => {
-                    if (overlay) { overlay.style.display = 'none'; }
-                    if (themeMeta) { themeMeta.setAttribute('content', corAnterior); }
+                    requestAnimationFrame(() => {
+                        if (overlay) { overlay.style.display = 'none'; }
+                        if (themeMeta) { themeMeta.setAttribute('content', corAnterior); }
+                    });
                 });
-            });
+            }, espera);
         });
     });
 };
