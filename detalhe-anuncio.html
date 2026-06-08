@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Detalhes do Anúncio | Pede Aí</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --used-blue: #0077ff;
+            --danger: #ff3b30;
+            --bg-soft: #f2f2f7;
+            --text-main: #1c1c1e;
+            --text-secondary: #8e8e93;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: white; color: var(--text-main); padding-bottom: 100px; }
+
+        .header-nav {
+            position: sticky; top: 0; background: white; z-index: 100;
+            display: flex; align-items: center; padding: 15px;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+        }
+        .back-btn { border: none; background: none; font-size: 20px; cursor: pointer; color: var(--used-blue); }
+
+        .main-image-container {
+            width: 100%; aspect-ratio: 1/1; background: var(--bg-soft);
+            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        }
+        .main-image { width: 100%; height: 100%; object-fit: cover; }
+        .no-image { color: var(--text-secondary); text-align: center; }
+
+        .content { padding: 20px; }
+        .price { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
+        .title { font-size: 20px; font-weight: 600; line-height: 1.3; margin-bottom: 15px; }
+        
+        .divider { height: 1px; background: var(--bg-soft); margin: 20px 0; }
+        
+        .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px; }
+        .description { font-size: 16px; line-height: 1.6; color: #444; white-space: pre-line; }
+
+        .footer-action {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 15px 20px calc(env(safe-area-inset-bottom) + 15px);
+            background: white; border-top: 1px solid var(--bg-soft);
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .btn-whatsapp {
+            background: #25D366; color: white; text-decoration: none;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            height: 55px; border-radius: 12px; font-weight: 700; font-size: 16px;
+        }
+        .btn-report {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 12px; font-weight: 500; cursor: pointer;
+            align-self: center; margin-top: 5px;
+        }
+    .galeria-thumbs {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.thumb-item {
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border 0.2s;
+}
+.thumb-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+    
+    </style>
+</head>
+<body>
+
+    <div class="header-nav">
+        <button class="back-btn" onclick="history.back()">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <span style="margin-left: 15px; font-weight: 600;">Detalhes</span>
+    </div>
+
+    <div id="detalheAnuncio">
+        <div style="text-align:center; padding:60px 20px;">
+            <i class="fas fa-circle-notch fa-spin" style="font-size:32px; color:#0077ff;"></i>
+        </div>
+    </div>
+
+    <div class="footer-action">
+        <a id="linkWhatsapp" href="#" target="_blank" class="btn-whatsapp">
+            <i class="fab fa-whatsapp"></i> Falar com vendedor
+        </a>
+        <button id="btnDenunciar" class="btn-report">
+            <i class="fas fa-flag"></i> Denunciar este anúncio
+        </button>
+    </div>
+
+    <script type="module">
+        import { db } from './config.js';
+        import { doc, getDoc, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const WHATSAPP_ADMIN = "5599999999999";
+
+        function cloudThumb(url, w = 1200) {
+    if (!url || typeof url !== 'string') return '';
+    if (!url.includes('res.cloudinary.com')) return url;
+    // Se já tiver transformações, retorna a URL original (não duplicar)
+    if (url.includes('/upload/w_') || url.includes('/upload/c_') || url.includes('/upload/q_') || url.includes('/upload/f_')) {
+        return url;
+    }
+    // Aplica transformações apenas se não houver nenhuma
+    return url.replace('/upload/', `/upload/w_${w},h_${w},c_fill,q_auto,f_auto/`);
+}
+        function escapeHtml(texto) {
+            if (!texto) return '';
+            return texto.replace(/[&<>]/g, m => {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        async function carregarDetalhes() {
+            const params = new URLSearchParams(window.location.search);
+            const id = params.get("id");
+            
+            if (!id) {
+                document.getElementById('detalheAnuncio').innerHTML = `<p style="padding:20px; text-align:center;">Anúncio não encontrado.</p>`;
+                return;
+            }
+            
+            try {
+                const [docSnap, configSnapParalelo] = await Promise.all([
+                    getDoc(doc(db, "anuncios", id)),
+                    getDoc(doc(db, "configuracoes", "anuncios"))
+                ]);
+
+                if (!docSnap.exists()) {
+                    document.getElementById('detalheAnuncio').innerHTML = `<p style="padding:20px; text-align:center;">Anúncio não encontrado.</p>`;
+                    return;
+                }
+
+                const anuncio = { id: docSnap.id, ...docSnap.data() };
+                
+                const precoExibicao = (anuncio.categoria === 'Empregos' || anuncio.categoria === 'Serviços') && (!anuncio.preco || anuncio.preco == 0) 
+                    ? "Combinar" 
+                    : `R$ ${parseFloat(anuncio.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+                const fotos = anuncio.fotos && anuncio.fotos.length > 0 ? anuncio.fotos : (anuncio.foto ? [anuncio.foto] : []);
+const primeiraFoto = fotos[0] || '';
+
+const galeriaHTML = fotos.length > 1 ? `
+    <div class="galeria-thumbs" style="display: flex; gap: 8px; padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        ${fotos.map((f, idx) => `
+            <div class="thumb-item" onclick="document.getElementById('mainImage').src='${cloudThumb(f, 1200)}'" style="flex-shrink:0; width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: ${idx === 0 ? '2px solid #0077ff' : '1px solid #e0e0e0'}; cursor: pointer;">
+                <img src="${cloudThumb(f, 120)}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
+            </div>
+        `).join('')}
+    </div>
+` : '';
+
+const html = `
+    <div class="main-image-container">
+        ${primeiraFoto ? `<img id="mainImage" src="${cloudThumb(primeiraFoto, 1200)}" class="main-image">` : `
+            <div class="no-image"><i class="fas fa-image fa-3x"></i><br>Sem imagem</div>
+        `}
+    </div>
+    ${galeriaHTML}
+    <div class="content">
+        <div class="price">${precoExibicao}</div>
+        <h1 class="title">${escapeHtml(anuncio.titulo)}</h1>
+        <div class="divider"></div>
+        <div class="section-title">Descrição</div>
+        <div class="description">${escapeHtml(anuncio.descricao || 'Sem descrição detalhada.')}</div>
+        <div class="divider"></div>
+        <div style="font-size: 12px; color: var(--text-secondary);">
+            ID do anúncio: ${anuncio.id}<br>
+            Categoria: ${anuncio.categoria}
+        </div>
+    </div>
+`;
+
+                document.getElementById('detalheAnuncio').innerHTML = html;
+
+                let foneDestino = WHATSAPP_ADMIN;
+                if (configSnapParalelo.exists() && configSnapParalelo.data().whatsappGlobal) {
+                    foneDestino = configSnapParalelo.data().whatsappGlobal.replace(/\D/g, '');
+                }
+
+                const msg = encodeURIComponent(`Olá, tenho interesse no anúncio: ${anuncio.titulo} (ID: ${anuncio.id})`);
+                const linkWhats = `https://wa.me/${foneDestino}?text=${msg}`;
+                
+                document.getElementById('linkWhatsapp').href = linkWhats;
+                document.getElementById('linkWhatsapp').onclick = async (e) => {
+                    e.preventDefault();
+                    try {
+                        await addDoc(collection(db, "interessadosAnuncios"), {
+                            idAnuncio: id,
+                            nomeAnuncio: anuncio.titulo || "Sem título",
+                            nomeAnunciante: anuncio.nome || "Não informado",
+                            telefoneAnunciante: (anuncio.whatsapp || anuncio.telefone || anuncio.contato || anuncio.whats || anuncio.anuncianteWhatsapp) || foneDestino,
+                            dataInteresse: serverTimestamp(),
+                            status: "novo"
+                        });
+                    } catch (err) {
+                        console.error("Erro ao registrar interesse:", err);
+                    }
+                    window.open(linkWhats, '_blank');
+                };
+
+                document.getElementById('btnDenunciar').onclick = async () => {
+                    const motivo = prompt("Por favor, insira o motivo da denúncia:");
+                    if (!motivo || !motivo.trim()) return;
+
+                    try {
+                        await addDoc(collection(db, "denuncias_anuncios"), {
+                            idAnuncio: id,
+                            nomeAnuncio: anuncio.titulo,
+                            motivoDenuncia: motivo.trim(),
+                            dataDenuncia: serverTimestamp(),
+                            statusDenuncia: "pendente"
+                        });
+
+                        alert("Denúncia enviada com sucesso!");
+                    } catch (error) {
+                        console.error("Erro ao enviar denúncia:", error);
+                        alert("Erro ao enviar denúncia.");
+                    }
+                };
+                
+            } catch (error) {
+                console.error("Erro ao carregar anúncio:", error);
+                document.getElementById('detalheAnuncio').innerHTML = `<p style="padding:20px; text-align:center;">Erro ao carregar anúncio.</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDetalhes();
+        });
+    </script>
+</body>
+</html>
