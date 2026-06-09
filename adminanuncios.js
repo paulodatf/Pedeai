@@ -76,6 +76,10 @@ async function carregarAdmin() {
             const telefoneExibicao = numeroGlobalAnuncios || a.whatsapp || 'Não informado';
             const foneLimpo = numeroGlobalAnuncios ? numeroGlobalAnuncios.replace(/\D/g, '') : (a.whatsapp ? a.whatsapp.replace(/\D/g, '') : "");
             const labelContato = numeroGlobalAnuncios ? '(Oficial)' : '(Vendedor)';
+            const precoExibicao = typeof a.preco === 'number'
+                ? a.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                : (a.preco ? `R$ ${a.preco}` : 'Não informado');
+            const precoRaw = (a.preco !== undefined && a.preco !== null && !isNaN(a.preco)) ? Number(a.preco) : 0;
 
             return `
                 <div class="card-admin">
@@ -88,10 +92,12 @@ async function carregarAdmin() {
                         </div>
                         <div>Status: <span class="badge ${badgeClass}">${a.status}</span></div>
                         <div style="color: ${a.denuncias > 0 ? 'red' : '#666'}">Denúncias: ${a.denuncias}</div>
+                        <div>Valor: <strong id="preco-${a.id}">${precoExibicao}</strong></div>
                         
                         <div class="acoes">
                             <button onclick="window.alterarStatus('${a.id}', 'aprovado')" class="btn btn-aprovar">Aprovar</button>
                             <button onclick="window.alterarStatus('${a.id}', 'rejeitado')" class="btn btn-rejeitar">Rejeitar</button>
+                            <button onclick="window.abrirModalEditarValor('${a.id}', ${precoRaw})" class="btn" style="background:#0077ff; color:white; grid-column:1/-1;">💰 Editar Valor</button>
                             <button onclick="window.excluirAnuncio('${a.id}')" class="btn btn-excluir">Excluir Permanente</button>
                             <a href="https://wa.me/55${foneLimpo}" target="_blank" class="btn btn-whats">Falar no WhatsApp</a>
                         </div>
@@ -161,6 +167,52 @@ async function excluirAnuncio(id) {
     }
 }
 
+// ========== EDITAR VALOR DO ANÚNCIO ==========
+let _editarId = null;
+
+function abrirModalEditarValor(id, precoAtual) {
+    _editarId = id;
+    const input = document.getElementById('inputNovoValor');
+    if (input) input.value = (precoAtual !== null && precoAtual !== undefined && !isNaN(precoAtual)) ? precoAtual : '';
+    document.getElementById('modalEditarValor').classList.add('ativo');
+}
+
+function fecharModalEditarValor() {
+    _editarId = null;
+    const input = document.getElementById('inputNovoValor');
+    if (input) input.value = '';
+    document.getElementById('modalEditarValor').classList.remove('ativo');
+}
+
+async function confirmarEdicaoValor() {
+    const input = document.getElementById('inputNovoValor');
+    const novoValor = parseFloat(input.value);
+
+    if (isNaN(novoValor) || novoValor < 0) {
+        mostrarToast('Informe um valor válido.', 'erro');
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, "anuncios", _editarId), { preco: novoValor });
+
+        // Invalida o cache do classifieds para refletir o novo valor
+        sessionStorage.removeItem('todosAnunciosCache');
+
+        // Atualiza o span do preço no card sem recarregar a página
+        const spanPreco = document.getElementById(`preco-${_editarId}`);
+        if (spanPreco) {
+            spanPreco.textContent = novoValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        mostrarToast('Valor atualizado com sucesso!', 'info');
+        fecharModalEditarValor();
+    } catch (error) {
+        console.error('Erro ao atualizar valor:', error);
+        mostrarToast('Erro ao atualizar valor.', 'erro');
+    }
+}
+
 // ========== SALVAR NÚMERO GLOBAL ==========
 async function salvarNumeroGlobal() {
     const inputNumero = document.getElementById('inputNumeroGlobal').value.trim();
@@ -178,6 +230,9 @@ window.alterarStatus = alterarStatus;
 window.excluirAnuncio = excluirAnuncio;
 window.carregarAdmin = carregarAdmin;
 window.salvarNumeroGlobal = salvarNumeroGlobal;
+window.abrirModalEditarValor = abrirModalEditarValor;
+window.fecharModalEditarValor = fecharModalEditarValor;
+window.confirmarEdicaoValor = confirmarEdicaoValor;
 
 // ========== CARREGAR E GERENCIAR DENÚNCIAS ==========
 async function carregarDenuncias() {

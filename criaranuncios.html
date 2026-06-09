@@ -23,11 +23,12 @@
             text-align: center; cursor: pointer; color: #718096; margin-bottom: 10px;
         }
         .btn-submit {
-            width: 100%; background: var(--primary); color: white; border: none;
+            width: 100%; background: #0077ff; color: #ffffff; border: none;
             padding: 16px; border-radius: 12px; font-weight: 700; font-size: 16px;
             cursor: pointer; margin-top: 10px; transition: opacity 0.2s;
         }
-        .btn-submit:disabled { opacity: 0.6; }
+        .btn-submit:hover:not(:disabled) { background: #005fcc; }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 .galeria-preview {
     display: flex;
     flex-wrap: wrap;

@@ -16,69 +16,102 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
-        body { background: white; color: var(--text-main); padding-bottom: 100px; }
+        body { background: white; color: var(--text-main); padding-bottom: 120px; }
 
+        /* ── Header ─────────────────────────────────────────── */
         .header-nav {
-            position: sticky; top: 0; background: white; z-index: 100;
-            display: flex; align-items: center; padding: 15px;
-            box-shadow: 0 1px 0 rgba(0,0,0,0.05);
+            position: sticky; top: 0;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            z-index: 100;
+            display: flex; align-items: center; padding: 14px 16px;
+            border-bottom: 0.5px solid rgba(0,0,0,0.1);
         }
-        .back-btn { border: none; background: none; font-size: 20px; cursor: pointer; color: var(--used-blue); }
-
-        .main-image-container {
-            width: 100%; aspect-ratio: 1/1; background: var(--bg-soft);
-            display: flex; align-items: center; justify-content: center; overflow: hidden;
+        .back-btn {
+            border: none; background: var(--bg-soft);
+            font-size: 15px; cursor: pointer; color: var(--used-blue);
+            width: 34px; height: 34px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
         }
-        .main-image { width: 100%; height: 100%; object-fit: cover; }
-        .no-image { color: var(--text-secondary); text-align: center; }
+        .header-title { margin-left: 12px; font-weight: 600; font-size: 16px; }
 
-        .content { padding: 20px; }
-        .price { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 8px; }
-        .title { font-size: 20px; font-weight: 600; line-height: 1.3; margin-bottom: 15px; }
-        
-        .divider { height: 1px; background: var(--bg-soft); margin: 20px 0; }
-        
-        .section-title { font-size: 14px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 10px; }
-        .description { font-size: 16px; line-height: 1.6; color: #444; white-space: pre-line; }
+        /* ── Galeria Carousel ────────────────────────────────── */
+        .galeria-wrap { position: relative; background: var(--bg-soft); }
+        .galeria-carousel {
+            display: flex;
+            overflow-x: scroll;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .galeria-carousel::-webkit-scrollbar { display: none; }
+        .galeria-slide {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+            aspect-ratio: 1/1;
+            background: var(--bg-soft);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+        .galeria-slide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .galeria-vazia { flex-direction: column; gap: 10px; color: var(--text-secondary); font-size: 13px; }
+        .galeria-dots {
+            position: absolute; bottom: 10px; left: 0; right: 0;
+            display: flex; justify-content: center; align-items: center;
+            gap: 5px; pointer-events: none;
+        }
+        .dot {
+            width: 6px; height: 6px; border-radius: 3px;
+            background: rgba(255,255,255,0.55);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+            transition: width 0.25s ease, background 0.25s ease;
+        }
+        .dot.active { width: 18px; background: white; }
 
+        /* ── Conteúdo ────────────────────────────────────────── */
+        .content { padding: 20px 20px 10px; }
+        .cat-badge {
+            display: inline-flex; align-items: center;
+            background: var(--bg-soft); color: var(--text-secondary);
+            font-size: 11px; font-weight: 700;
+            padding: 4px 10px; border-radius: 20px;
+            margin-bottom: 12px;
+            text-transform: uppercase; letter-spacing: 0.4px;
+        }
+        .price { font-size: 30px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; letter-spacing: -0.5px; }
+        .title { font-size: 19px; font-weight: 600; line-height: 1.35; color: var(--text-main); }
+        .divider { height: 0.5px; background: var(--bg-soft); margin: 20px 0; }
+        .section-title {
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.6px;
+            color: var(--text-secondary); margin-bottom: 10px;
+        }
+        .description { font-size: 15px; line-height: 1.65; color: #3a3a3c; white-space: pre-line; }
+
+        /* ── Footer Action ───────────────────────────────────── */
         .footer-action {
             position: fixed; bottom: 0; left: 0; right: 0;
-            padding: 15px 20px calc(env(safe-area-inset-bottom) + 15px);
-            background: white; border-top: 1px solid var(--bg-soft);
-            display: flex; flex-direction: column; gap: 10px;
+            padding: 12px 20px calc(env(safe-area-inset-bottom) + 12px);
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border-top: 0.5px solid rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; gap: 8px;
         }
         .btn-whatsapp {
             background: #25D366; color: white; text-decoration: none;
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            height: 55px; border-radius: 12px; font-weight: 700; font-size: 16px;
+            height: 52px; border-radius: 14px; font-weight: 700; font-size: 16px;
+            box-shadow: 0 4px 16px rgba(37,211,102,0.3);
         }
+        .btn-whatsapp:active { opacity: 0.88; transform: scale(0.98); }
         .btn-report {
             background: none; border: none; color: var(--text-secondary);
             font-size: 12px; font-weight: 500; cursor: pointer;
-            align-self: center; margin-top: 5px;
+            align-self: center; padding: 4px 8px;
         }
-    .galeria-thumbs {
-    display: flex;
-    gap: 8px;
-    padding: 12px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: thin;
-}
-.thumb-item {
-    flex-shrink: 0;
-    width: 60px;
-    height: 60px;
-    border-radius: 8px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border 0.2s;
-}
-.thumb-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
     
     </style>
 </head>
@@ -88,7 +121,7 @@
         <button class="back-btn" onclick="history.back()">
             <i class="fas fa-chevron-left"></i>
         </button>
-        <span style="margin-left: 15px; font-weight: 600;">Detalhes</span>
+        <span class="header-title">Detalhes</span>
     </div>
 
     <div id="detalheAnuncio">
@@ -159,47 +192,63 @@
                     : `R$ ${parseFloat(anuncio.preco || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
                 const fotos = anuncio.fotos && anuncio.fotos.length > 0 ? anuncio.fotos : (anuncio.foto ? [anuncio.foto] : []);
-const primeiraFoto = fotos[0] || '';
 
-const galeriaHTML = fotos.length > 1 ? `
-    <div class="galeria-thumbs" style="display: flex; gap: 8px; padding: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch;">
-        ${fotos.map((f, idx) => `
-            <div class="thumb-item" onclick="document.getElementById('mainImage').src='${cloudThumb(f, 1200)}'" style="flex-shrink:0; width: 60px; height: 60px; border-radius: 8px; overflow: hidden; border: ${idx === 0 ? '2px solid #0077ff' : '1px solid #e0e0e0'}; cursor: pointer;">
-                <img src="${cloudThumb(f, 120)}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">
-            </div>
-        `).join('')}
+const galeriaSection = fotos.length > 0 ? `
+    <div class="galeria-wrap">
+        <div class="galeria-carousel" id="galeriaCarousel">
+            ${fotos.map((f, idx) => `
+                <div class="galeria-slide">
+                    <img src="${cloudThumb(f, 1200)}" loading="${idx === 0 ? 'eager' : 'lazy'}" alt="Foto ${idx + 1}">
+                </div>
+            `).join('')}
+        </div>
+        ${fotos.length > 1 ? `
+        <div class="galeria-dots" id="galeriaDots">
+            ${fotos.map((_, idx) => `<div class="dot${idx === 0 ? ' active' : ''}"></div>`).join('')}
+        </div>` : ''}
     </div>
-` : '';
+` : `
+    <div class="galeria-wrap">
+        <div class="galeria-carousel">
+            <div class="galeria-slide galeria-vazia">
+                <i class="fas fa-image fa-2x"></i>
+                <span>Sem imagem</span>
+            </div>
+        </div>
+    </div>
+`;
 
 const html = `
-    <div class="main-image-container">
-        ${primeiraFoto ? `<img id="mainImage" src="${cloudThumb(primeiraFoto, 1200)}" class="main-image">` : `
-            <div class="no-image"><i class="fas fa-image fa-3x"></i><br>Sem imagem</div>
-        `}
-    </div>
-    ${galeriaHTML}
+    ${galeriaSection}
     <div class="content">
+        <div class="cat-badge">${escapeHtml(anuncio.categoria)}</div>
         <div class="price">${precoExibicao}</div>
         <h1 class="title">${escapeHtml(anuncio.titulo)}</h1>
         <div class="divider"></div>
         <div class="section-title">Descrição</div>
         <div class="description">${escapeHtml(anuncio.descricao || 'Sem descrição detalhada.')}</div>
-        <div class="divider"></div>
-        <div style="font-size: 12px; color: var(--text-secondary);">
-            ID do anúncio: ${anuncio.id}<br>
-            Categoria: ${anuncio.categoria}
-        </div>
     </div>
 `;
 
                 document.getElementById('detalheAnuncio').innerHTML = html;
+
+                // Sincroniza dots com o scroll do carousel
+                const carousel = document.getElementById('galeriaCarousel');
+                const dots = document.querySelectorAll('#galeriaDots .dot');
+                if (carousel && dots.length > 1) {
+                    carousel.addEventListener('scroll', () => {
+                        const idx = Math.round(carousel.scrollLeft / carousel.offsetWidth);
+                        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+                    }, { passive: true });
+                }
 
                 let foneDestino = WHATSAPP_ADMIN;
                 if (configSnapParalelo.exists() && configSnapParalelo.data().whatsappGlobal) {
                     foneDestino = configSnapParalelo.data().whatsappGlobal.replace(/\D/g, '');
                 }
 
-                const msg = encodeURIComponent(`Olá, tenho interesse no anúncio: ${anuncio.titulo} (ID: ${anuncio.id})`);
+                const linkAnuncio = window.location.href;
+                const msg = encodeURIComponent(`Olá! Tenho interesse neste anúncio:\n\nProduto: ${anuncio.titulo}\n\nLink: ${linkAnuncio}`);
                 const linkWhats = `https://wa.me/${foneDestino}?text=${msg}`;
                 
                 document.getElementById('linkWhatsapp').href = linkWhats;

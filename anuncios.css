@@ -118,6 +118,7 @@
     scrollbar-width: none;
     flex-wrap: nowrap;
     -webkit-overflow-scrolling: touch;
+    justify-content: center;
 }
 
 .classifieds-page .categories-container::-webkit-scrollbar {
@@ -204,11 +205,8 @@
 /* Container de imagem — mesma altura do .img-box do index */
 .classifieds-page .card-img-container {
     width: 100%;
-    height: 210px;
+    height: 230px;
     background-color: #fcfcfc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     overflow: hidden;
     border-bottom: 1px solid #f9f9f9;
 }
@@ -216,7 +214,7 @@
 .classifieds-page .card-img-container img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
 }
 
 /* Corpo do card */
