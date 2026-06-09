@@ -54,7 +54,6 @@ document.getElementById('fotosFile').addEventListener('change', function(e) {
 
 // ========== PLANO SELECIONADO ==========
 const tipoSelecionado = localStorage.getItem('pedeai_tipo_anuncio') || 'rapido';
-const avisoBox = document.getElementById('statusPlano');
 let fotosSelecionadas = [];
 
 function atualizarGaleriaPreview() {
@@ -81,11 +80,6 @@ function atualizarGaleriaPreview() {
         };
         reader.readAsDataURL(file);
     });
-}
-if (tipoSelecionado === 'rapido') {
-    avisoBox.innerHTML = '<i class="fas fa-bolt"></i> Seu anúncio será publicado e os clientes falarão direto com você.';
-} else {
-    avisoBox.innerHTML = '<i class="fas fa-handshake"></i> Você só paga após vender. Nós vamos falar com os clientes por você.';
 }
 
 // ========== UPLOAD PARA CLOUDINARY ==========
@@ -178,12 +172,7 @@ const novoAnuncio = {
 
     try {
         await addDoc(collection(db, "anuncios"), novoAnuncio);
-        mostrarToast('Anúncio publicado com sucesso!', 'info');
-        setTimeout(() => {
-            // history.back() preserva BFCache do index e restaura o módulo de anúncios
-            // sem recarregar a página ou depender de sessionStorage
-            history.back();
-        }, 1500);
+        window.mostrarModalSucesso();
     } catch (error) {
         console.error('Erro ao salvar no Firestore:', error);
         mostrarToast('Erro ao publicar anúncio. Tente novamente.', 'erro');

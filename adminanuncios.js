@@ -73,13 +73,17 @@ async function carregarAdmin() {
             if (a.denuncias === undefined) a.denuncias = 0;
 
             const badgeClass = `badge-${a.status}`;
-            const telefoneExibicao = numeroGlobalAnuncios || a.whatsapp || 'Não informado';
-            const foneLimpo = numeroGlobalAnuncios ? numeroGlobalAnuncios.replace(/\D/g, '') : (a.whatsapp ? a.whatsapp.replace(/\D/g, '') : "");
-            const labelContato = numeroGlobalAnuncios ? '(Oficial)' : '(Vendedor)';
+            const telefoneExibicao = a.whatsapp || 'Não informado';
+            const foneLimpo = a.whatsapp ? a.whatsapp.replace(/\D/g, '') : "";
+            const labelContato = '(Vendedor)';
             const precoExibicao = typeof a.preco === 'number'
                 ? a.preco.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
                 : (a.preco ? `R$ ${a.preco}` : 'Não informado');
             const precoRaw = (a.preco !== undefined && a.preco !== null && !isNaN(a.preco)) ? Number(a.preco) : 0;
+            const foneAnunciante = a.whatsapp ? a.whatsapp.replace(/\D/g, '') : "";
+            const msgAnunciante = encodeURIComponent(
+                `Olá.\n\nSeu anúncio foi analisado pela administração.\n\nLembramos que após a venda é cobrada uma comissão de 7%.\n\nCaso deseje alterar o valor do produto para compensar essa comissão, responda esta mensagem e realizaremos a alteração para você.\n\nProduto:\n\n${a.titulo}\n\nValor atual:\n\n${precoExibicao}`
+            );
 
             return `
                 <div class="card-admin">
@@ -99,7 +103,7 @@ async function carregarAdmin() {
                             <button onclick="window.alterarStatus('${a.id}', 'rejeitado')" class="btn btn-rejeitar">Rejeitar</button>
                             <button onclick="window.abrirModalEditarValor('${a.id}', ${precoRaw})" class="btn" style="background:#0077ff; color:white; grid-column:1/-1;">💰 Editar Valor</button>
                             <button onclick="window.excluirAnuncio('${a.id}')" class="btn btn-excluir">Excluir Permanente</button>
-                            <a href="https://wa.me/55${foneLimpo}" target="_blank" class="btn btn-whats">Falar no WhatsApp</a>
+                            ${foneAnunciante ? `<a href="https://wa.me/55${foneAnunciante}?text=${msgAnunciante}" target="_blank" class="btn btn-whats">Falar com anunciante</a>` : `<span class="btn btn-whats" style="opacity:0.5; cursor:not-allowed;">Sem telefone</span>`}
                         </div>
                     </div>
                 </div>
