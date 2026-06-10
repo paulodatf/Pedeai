@@ -386,8 +386,10 @@ const funcAddConfig = adicionaisProduto.length > 0
                             const tamanhosExistentes = (p.tamanhosDisponiveis && p.tamanhosDisponiveis.length > 0) ? p.tamanhosDisponiveis : (p.numeracoes ? p.numeracoes.split(',').map(s => s.trim()) : []);
                             if(tamanhosExistentes.length === 0) {
                                 window.adicionarAoCarrinho(d.id, nomeSanitizado, p.preco, p.owner, p.whatsapp, imgCapaRaw, linkProduto, descSanitizada);
+                                exibirToastSucesso();
                                 return;
                             }
+                            
                             // modal simples para tamanho
                             const modalHTML = `
                             <div id="modal-tamanho-simples" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:10000; display:flex; align-items:center; justify-content:center;">
@@ -403,6 +405,7 @@ const funcAddConfig = adicionaisProduto.length > 0
                                     const tamanhoSelecionado = btn.getAttribute('data-tamanho');
                                     window.adicionarAoCarrinho(d.id, nomeSanitizado + ' (Tam: ' + tamanhoSelecionado + ')', p.preco, p.owner, p.whatsapp, imgCapaRaw, linkProduto, descSanitizada);
                                     document.getElementById('modal-tamanho-simples')?.remove();
+                                    exibirToastSucesso();
                                 });
                             });
                             document.getElementById('modal-tamanho-cancel')?.addEventListener('click', () => {
@@ -410,6 +413,7 @@ const funcAddConfig = adicionaisProduto.length > 0
                             });
                         } else {
                             window.adicionarAoCarrinho(d.id, nomeSanitizado, p.preco, p.owner, p.whatsapp, imgCapaRaw, linkProduto, descSanitizada);
+                            exibirToastSucesso();
                         }
                     };
                 }
@@ -714,6 +718,7 @@ window.atualizarPrecoModal = () => {
         );
         
         document.getElementById('modalComida').classList.remove('active');
+        exibirToastSucesso();
         document.getElementById('overlayComida').style.display = 'none';
     };
 }
@@ -777,6 +782,7 @@ window.abrirAdicionaisProduto = (id, nome, preco, owner, whatsapp, imagem, link,
         const descFinal = obs ? `${desc} | Obs: ${obs}` : desc;
         window.adicionarAoCarrinho(id, nomeFinal, totalFinal, owner, whatsapp, imagem, link, descFinal);
         modal.classList.remove('active');
+        exibirToastSucesso();
         overlay.style.display = 'none';
     };
 
@@ -847,3 +853,58 @@ window.enviarDenuncia = async () => {
         }
     }
 };
+
+// Função auxiliar para renderizar o Toast elegante estilo App Premium (iOS/iFood/Shopee)
+function exibirToastSucesso(mensagem = "Item adicionado com sucesso") {
+    const toastExistente = document.getElementById('toast-sucesso-container');
+    if (toastExistente) toastExistente.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'toast-sucesso-container';
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 50px;
+        left: 50%;
+        transform: translate(-50%, 30px);
+        background: rgba(20, 20, 20, 0.94);
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        color: #ffffff;
+        padding: 12px 24px;
+        border-radius: 50px;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+        z-index: 999999;
+        opacity: 0;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+        pointer-events: none;
+        white-space: nowrap;
+    `;
+
+    toast.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+            <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <span style="letter-spacing: 0.2px;">${mensagem}</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Ativa animação de entrada suave (fade-in + slide-up leve)
+    setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translate(-50%, 0)';
+    }, 20);
+
+    // Desaparece e remove do DOM automaticamente
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translate(-50%, -15px)';
+        setTimeout(() => toast.remove(), 400);
+    }, 2300);
+}

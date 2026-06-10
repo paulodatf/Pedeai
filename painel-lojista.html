@@ -765,19 +765,6 @@
                 <textarea id="pDesc" rows="3" placeholder="Detalhes do seu produto..."></textarea>
             </div>
 
-            <div id="group-permitir-montar" style="display:none; background:#f0fff4; border:1px solid #28a745; border-radius:8px; padding:12px; margin-bottom:15px;">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <div>
-            <strong style="font-size:13px; color:#155724;">🛠️ Permitir montagem neste item?</strong>
-            <p style="margin:3px 0 0; font-size:11px; color:#666;">Ative para itens como Açaí, Burger — que o cliente monta</p>
-        </div>
-        <label class="switch">
-            <input type="checkbox" id="pPermiteMontar">
-            <span class="slider-switch"></span>
-        </label>
-    </div>
-</div>
-
 <div id="group-adicionais-produto" style="display:none; background:#f0f4ff; border:1px solid #4a6cf7; border-radius:8px; padding:12px; margin-bottom:15px;">
     <strong style="font-size:13px; color:#1a3a8f; display:block; margin-bottom:6px;">➕ Adicionais deste produto</strong>
     <p style="margin:0 0 10px; font-size:11px; color:#666;">Ex: +1 Ovo, +Queijo Extra — opcionais que o cliente pode adicionar</p>
@@ -801,44 +788,6 @@
             </div>
 
             <button id="btn-salvar" class="btn-post">PUBLICAR NA VITRINE</button>
-        </div>
-
-        <div class="card-admin" id="card-config-montar" style="display:none; border-left: 5px solid #28a745;">
-            <div class="switch-container">
-                <div>
-                    <h3 style="margin:0;">🛠️ Função Montar Personalizado</h3>
-                    <p style="margin:5px 0 0; font-size:11px; color:#666;">Ative um botão global de montagem (Açaí, Burger, etc)</p>
-                </div>
-                <label class="switch">
-                    <input type="checkbox" id="checkMontarGlobal" onchange="toggleMontarGlobalUI()">
-                    <span class="slider-switch"></span>
-                </label>
-            </div>
-
-            <div id="resumo-montar-global" class="modo-compacto" style="display:none;" onclick="forcarAbrirMontar()">
-                <div>
-                    <span class="status-badge">✔ Montar personalizado ATIVADO</span>
-                    <p style="margin:8px 0 0; font-size:13px; color:#2d5a27; font-weight:bold;">Toque aqui para editar / configurar</p>
-                </div>
-                <i class="fa-solid fa-chevron-right" style="color: #28a745;"></i>
-            </div>
-
-            <div id="form-montar-global" style="display:none;">
-                <div class="form-group">
-                    <label>Título do Botão (Ex: Montar meu Açaí)</label>
-                    <input type="text" id="mTitulo" placeholder="Ex: Montar meu Lanche">
-                </div>
-                
-                <label>Bases / Tamanhos (Obrigatório escolher uma)</label>
-                <div id="lista-variacoes-global"></div>
-                <button class="btn-add-config" onclick="addConfigRow('lista-variacoes-global')">+ Adicionar Opção</button>
-
-                <label style="margin-top:10px;">Ingredientes / Adicionais</label>
-                <div id="lista-adicionais-global"></div>
-                <button class="btn-add-config" onclick="addConfigRow('lista-adicionais-global')">+ Adicionar Ingrediente</button>
-                
-                <button id="btn-salvar-montar" class="btn-post" style="background:#28a745;">SALVAR CONFIGURAÇÃO MONTAR</button>
-            </div>
         </div>
 
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; padding:0 5px;">
@@ -950,25 +899,16 @@
             }
         }
 
-        function forcarAbrirMontar() {
-            document.getElementById('resumo-montar-global').style.display = 'none';
-            document.getElementById('form-montar-global').style.display = 'block';
-        }
-
         function toggleFormFields() {
     const cat = document.getElementById('pCategoria').value;
     const groupTipo = document.getElementById('groupTipoProduto');
-    const groupMontar = document.getElementById('group-permitir-montar');
     const groupAdicionais = document.getElementById('group-adicionais-produto');
     
     if(cat === 'Comida') {
         groupTipo.style.display = 'none';
-        if(groupMontar) groupMontar.style.display = 'block';
         if(groupAdicionais) groupAdicionais.style.display = 'block';
     } else {
         groupTipo.style.display = 'block';
-        if(groupMontar) groupMontar.style.display = 'none';
-        if(groupMontar) document.getElementById('pPermiteMontar').checked = false;
         if(groupAdicionais) groupAdicionais.style.display = 'none';
     }
     toggleRoupaConfig();
@@ -983,20 +923,6 @@
                 areaRoupa.style.display = 'block';
             } else {
                 areaRoupa.style.display = 'none';
-            }
-        }
-
-        function toggleMontarGlobalUI() {
-            const check = document.getElementById('checkMontarGlobal');
-            const form = document.getElementById('form-montar-global');
-            const resumo = document.getElementById('resumo-montar-global');
-
-            if (check.checked) {
-                form.style.display = 'block';
-                resumo.style.display = 'none';
-            } else {
-                form.style.display = 'none';
-                resumo.style.display = 'none';
             }
         }
 

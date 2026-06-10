@@ -251,10 +251,6 @@ window.trocarContexto = (contexto) => {
         if (window.toggleFormFields) window.toggleFormFields();
     }
 
-    // Mostra/Esconde card de montar
-    const cardMontar = document.getElementById('card-config-montar');
-    if(cardMontar) cardMontar.style.display = contexto === 'Comida' ? 'block' : 'none';
-
     // AJUSTE SOLICITADO: Mostra/Esconde o campo "Tipo de Produto" baseado no contexto
     const groupTipo = document.getElementById('groupTipoProduto');
     if(groupTipo) {
@@ -364,22 +360,8 @@ if (userData.planoAtivo === 'basico' || !userData.planoAtivo) {
     document.getElementById('seletorContexto').style.display = 'block';
     window.trocarContexto('Geral');
 }
-
-            if(userData.montarAtivo) {
-                document.getElementById('checkMontarGlobal').checked = true;
-                document.getElementById('resumo-montar-global').style.display = 'flex';
-                document.getElementById('form-montar-global').style.display = 'none';
-                document.getElementById('mTitulo').value = userData.montarTitulo || "";
-                
-                if(userData.montarVariacoes) {
-                    document.getElementById('lista-variacoes-global').innerHTML = "";
-                    userData.montarVariacoes.forEach(v => window.addConfigRow('lista-variacoes-global', v.nome, v.preco));
-                }
-                if(userData.montarAdicionais) {
-                    document.getElementById('lista-adicionais-global').innerHTML = "";
-                    userData.montarAdicionais.forEach(a => window.addConfigRow('lista-adicionais-global', a.nome, a.preco));
-                }
-            }
+            
+            
         }
     } catch (e) { console.error("Erro ao verificar status:", e); }
 }
@@ -472,44 +454,6 @@ const numeroFormatado = apenasNumeros.startsWith('55')
     } finally {
         btn.innerText = "Salvar Alterações";
     }
-};
-
-document.getElementById('btn-salvar-montar').onclick = async () => {
-    const btn = document.getElementById('btn-salvar-montar');
-    const titulo = document.getElementById('mTitulo').value;
-    const ativo = document.getElementById('checkMontarGlobal').checked;
-
-    const variacoes = [];
-    document.querySelectorAll('#lista-variacoes-global .item-config').forEach(row => {
-        const n = row.querySelector('.conf-nome').value;
-        const p = row.querySelector('.conf-preco').value;
-        if(n) variacoes.push({nome: n, preco: p});
-    });
-
-    const adicionais = [];
-    document.querySelectorAll('#lista-adicionais-global .item-config').forEach(row => {
-        const n = row.querySelector('.conf-nome').value;
-        const p = row.querySelector('.conf-preco').value;
-        if(n) adicionais.push({nome: n, preco: p});
-    });
-
-    btn.innerText = "Salvando...";
-    try {
-        await updateDoc(doc(db, "usuarios", userId), { 
-            montarAtivo: ativo,
-            montarTitulo: titulo,
-            montarVariacoes: variacoes,
-            montarAdicionais: adicionais
-        });
-        
-        if(ativo) {
-            document.getElementById('form-montar-global').style.display = 'none';
-            document.getElementById('resumo-montar-global').style.display = 'flex';
-        }
-        
-        mostrarToast("Configuração de montagem salva!", "sucesso");
-        btn.innerText = "SALVAR CONFIGURAÇÃO MONTAR";
-    } catch (e) { mostrarToast("Erro ao salvar.", "erro"); btn.innerText = "SALVAR CONFIGURAÇÃO MONTAR"; }
 };
 
 document.getElementById('inputFotoPerfil').addEventListener('change', async (e) => {
@@ -756,7 +700,6 @@ document.getElementById('btn-salvar').onclick = async () => {
                 });
                 return lista;
             })(),
-            permiteMontar: categoria === 'Comida' ? (document.getElementById('pPermiteMontar') ? document.getElementById('pPermiteMontar').checked : false) : false,
             whatsapp: userData.whatsapp || "",
             createdAt: serverTimestamp()
         });

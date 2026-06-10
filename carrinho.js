@@ -41,11 +41,7 @@ window.adicionarAoCarrinho = (id, nome, preco, owner, whatsapp, imagem, linkProd
     localStorage.setItem(STORAGE_KEY, JSON.stringify(carrinho));
     window.atualizarIconeCarrinho();
     
-    const btn = document.getElementById('carrinho-flutuante');
-    if(btn) { 
-        btn.style.transform = 'scale(1.2)'; 
-        setTimeout(() => btn.style.transform = 'scale(1)', 200); 
-    }
+    window.__dispararFlyAnimation(imagem);
 };
 
 // 2. ALTERAR QUANTIDADE
@@ -61,6 +57,7 @@ window.alterarQuantidadeCarrinho = (id, delta) => {
         // Atualiza badge da barra fixa da vitrine
     const vitrineBadge = document.getElementById('cart-badge-fixed');
     if (vitrineBadge) {
+        const totalItens = carrinho.reduce((acc, i) => acc + i.qtd, 0);
         if (totalItens > 0) {
             vitrineBadge.textContent = totalItens > 99 ? '99+' : totalItens;
             vitrineBadge.style.display = 'block';
@@ -218,7 +215,20 @@ window.abrirModalCarrinho = () => {
     const carrinho = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
     
     if (carrinho.length === 0) { 
-        if(modal) modal.style.display = 'none'; 
+        if (corpo) {
+            corpo.innerHTML = `
+                <div class="cart-empty-state" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; text-align: center; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#b0b0b0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 16px;">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    <div style="font-size: 16px; font-weight: 600; color: #222; margin-bottom: 6px;">Seu carrinho está vazio</div>
+                    <div style="font-size: 13px; color: #777; line-height: 1.4;">Adicione produtos para continuar</div>
+                </div>
+            `;
+        }
+        if (modal) modal.style.display = 'flex'; 
         return; 
     }
 
@@ -262,6 +272,108 @@ window.abrirModalCarrinho = () => {
     if(modal) modal.style.display = 'flex';
 };
 
+// ─── FLY-TO-CART ANIMATION ────────────────────────────────────────────────
+// Rastreia a posição do último toque/clique para usar como origem da animação.
+// Captura na fase de captura (capture:true) para pegar antes do stopPropagation.
+window.__pedeaiLastPos = { x: window.innerWidth / 2, y: window.innerHeight * 0.45 };
+
+(function _registrarTrackerPosicao() {
+    const _atualizar = (x, y) => { window.__pedeaiLastPos = { x, y }; };
+    document.addEventListener('touchstart', e => {
+        if (e.touches && e.touches[0]) _atualizar(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true, capture: true });
+    document.addEventListener('mousedown', e => {
+        _atualizar(e.clientX, e.clientY);
+    }, { passive: true, capture: true });
+})();
+
+window.__dispararFlyAnimation = function(imagemUrl) {
+    // ── Localiza o alvo do carrinho dinamicamente ──────────────────────
+    // Ordem de prioridade:
+    //   1. #carrinho-flutuante   → vitrine-cartao (layout original flutuante)
+    //   2. #cart-badge-fixed     → vitrine (badge na barra fixa)
+    //   3. #cart-count           → contador visível em qualquer layout
+    //   4. #carrinho-count       → id alternativo do contador
+    //   5. [onclick*="abrirModalCarrinho"] → qualquer botão que abre o modal
+    // Usa getBoundingClientRect() para confirmar que o elemento tem área real.
+    function __encontrarAlvoCarrinho() {
+        const seletores = [
+            '#carrinho-flutuante',
+            '#cart-badge-fixed',
+            '#cart-count',
+            '#carrinho-count',
+            '[onclick*="abrirModalCarrinho"]',
+        ];
+        for (const sel of seletores) {
+            const el = document.querySelector(sel);
+            if (!el) continue;
+            const r = el.getBoundingClientRect();
+            if (r.width > 0 && r.height > 0) return el;
+        }
+        return null;
+    }
+
+    const cartEl = __encontrarAlvoCarrinho();
+    if (!cartEl) return; // nenhum elemento de carrinho encontrado na tela
+
+    const cartRect = cartEl.getBoundingClientRect();
+    const origin   = window.__pedeaiLastPos;
+    const SIZE     = 54;
+    const halfSize = SIZE / 2;
+
+    // ── Cria miniatura voadora ─────────────────────────────────────────
+    const thumb = document.createElement('div');
+    thumb.setAttribute('aria-hidden', 'true');
+    thumb.style.cssText = [
+        'position:fixed',
+        `left:${origin.x - halfSize}px`,
+        `top:${origin.y - halfSize}px`,
+        `width:${SIZE}px`,
+        `height:${SIZE}px`,
+        'border-radius:50%',
+        'overflow:hidden',
+        'border:2px solid rgba(255,255,255,0.9)',
+        'box-shadow:0 6px 22px rgba(0,0,0,0.30)',
+        'z-index:99999',
+        'pointer-events:none',
+        'will-change:transform,opacity',
+        'backface-visibility:hidden',
+        '-webkit-backface-visibility:hidden',
+    ].join(';');
+
+    const img = document.createElement('img');
+    img.src = imagemUrl || '';
+    img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;';
+    thumb.appendChild(img);
+    document.body.appendChild(thumb);
+
+    // ── Vetor origem → centro real do carrinho ────────────────────────
+    const destX = (cartRect.left + cartRect.width  / 2) - origin.x;
+    const destY = (cartRect.top  + cartRect.height / 2) - origin.y;
+
+    // ── Dois rAF garantem que o navegador pinta o thumb antes de mover ─
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            thumb.style.transition =
+                'transform 0.54s cubic-bezier(0.22,1,0.36,1),' +
+                'opacity   0.40s ease 0.14s';
+            // translate3d ativa o compositor GPU — sem reflow, sem flash
+            thumb.style.transform = `translate3d(${destX}px,${destY}px,0) scale(0.22)`;
+            thumb.style.opacity   = '0';
+        });
+    });
+
+    // ── Ao chegar: remove thumb e bounce no elemento alvo ─────────────
+    setTimeout(() => {
+        thumb.remove();
+        cartEl.classList.remove('__pedeai-cart-bounce');
+        void cartEl.offsetWidth; // força reflow — necessário no Safari
+        cartEl.classList.add('__pedeai-cart-bounce');
+        setTimeout(() => cartEl.classList.remove('__pedeai-cart-bounce'), 460);
+    }, 520);
+};
+// ─────────────────────────────────────────────────────────────────────────────
+
 function inicializarCarrinho() {
     if (document.getElementById('carrinho-flutuante')) {
         window.atualizarIconeCarrinho();
@@ -272,10 +384,23 @@ function inicializarCarrinho() {
             touch-action: manipulation; 
             -webkit-tap-highlight-color: transparent; 
         }
+        @keyframes __pedeaiCartBounce {
+            0%   { transform: scale(1); }
+            35%  { transform: scale(1.42); }
+            60%  { transform: scale(0.88); }
+            80%  { transform: scale(1.12); }
+            100% { transform: scale(1); }
+        }
+        .__pedeai-cart-bounce {
+            animation: __pedeaiCartBounce 0.44s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+            transition: none !important;
+        }
         #carrinho-flutuante { position: fixed; right: 25px; bottom: 110px !important; width: 60px; height: 60px; background: #ee4d2d; border-radius: 50%; color: white; display: none; justify-content: center; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 9999; cursor: pointer; transition: transform 0.2s, opacity 0.3s; }
         #cart-count { position: absolute; top: -2px; right: -2px; background: #fff; color: #ee4d2d; border-radius: 50%; width: 22px; height: 22px; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 800; border: 2px solid #ee4d2d; }
         #modal-carrinho { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; display: none; justify-content: center; align-items: flex-end; }
-        .conteudo-modal { background: #f4f4f4; width: 100%; max-width: 500px; max-height: 80vh; border-radius: 20px 20px 0 0; padding: 20px; overflow-y: auto; }
+        .conteudo-modal { background: #f4f4f4; width: 100%; max-width: 500px; max-height: 80vh; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+        .cabecalho-modal-carrinho { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: #ffffff; border-bottom: 1px solid #e5e5e5; box-shadow: 0 2px 8px rgba(0,0,0,0.04); z-index: 10; border-radius: 20px 20px 0 0; }
+        #lista-carrinho-lojas { padding: 20px; overflow-y: auto; flex: 1; }
         .cart-store-group { background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; }
         .cart-store-header { font-size: 10px; color: #999; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; }
         .cart-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -288,7 +413,7 @@ function inicializarCarrinho() {
     </style>`;
     // Função para fechar o modal bloqueando o "clique fantasma" no Safari
     window.fecharModalCarrinho = (e) => {
-        if (e.target.id === 'modal-carrinho' || e.currentTarget.classList.contains('fa-times')) {
+        if (e.currentTarget && e.currentTarget.classList && e.currentTarget.classList.contains('fa-times')) {
             e.preventDefault();
             e.stopPropagation();
             
@@ -308,9 +433,9 @@ function inicializarCarrinho() {
         </div>
         <div id="modal-carrinho" onclick="window.fecharModalCarrinho(event)">
             <div class="conteudo-modal">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                    <b style="font-size:18px;">🛒 Meu Carrinho</b>
-                    <i class="fas fa-times" onclick="window.fecharModalCarrinho(event)" style="cursor:pointer; padding:10px;"></i>
+                <div class="cabecalho-modal-carrinho">
+                    <b style="font-size:18px; color: #222; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">🛒 Meu Carrinho</b>
+                    <i class="fas fa-times" onclick="window.fecharModalCarrinho(event)" style="cursor:pointer; padding:10px; color: #666; font-size: 18px;"></i>
                 </div>
                 <div id="lista-carrinho-lojas"></div>
             </div>
