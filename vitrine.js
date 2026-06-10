@@ -74,9 +74,9 @@ export async function carregarVitrineCompleta() {
 <div style="display: flex; align-items: center; width: 100%; justify-content: space-between; padding: 0 5px;">
 
     <div style="display: flex; align-items: center;">
-        <a href="index.html" class="back-btn" style="text-decoration:none; color:#222;">
-            <i class="fas fa-arrow-left"></i>
-        </a>
+        <a href="javascript:void(0)" class="back-btn" style="text-decoration:none; color:#222;" onclick="history.back(); return false;">
+    <i class="fas fa-arrow-left"></i>
+</a>
 
         <div style="display: flex; flex-direction: column;">
             <span style="font-weight: 700; font-size: 14px; color:#111;">
