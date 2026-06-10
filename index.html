@@ -450,52 +450,49 @@
                 themeColorMeta.setAttribute('content', newColor);
             }
 
-            setTimeout(() => {
-                document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
-                element.classList.add('active');
-                document.body.className = 'mode-' + mode;
-                const modoAnterior = sessionStorage.getItem('pedeai_mode');
-                sessionStorage.setItem('pedeai_mode', mode);
-                // Só invalida o cache DOM ao trocar entre products/restaurants.
-                // Ao voltar de classifieds, o cache ainda é válido.
-                if (mode !== 'classifieds' && modoAnterior !== 'classifieds') {
-                    sessionStorage.removeItem('pedeai_dom_cache');
-                }
+            // Aplica as mudanças de tema e visibilidade imediatamente (sem delay)
+document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+element.classList.add('active');
+document.body.className = 'mode-' + mode;
+const modoAnterior = sessionStorage.getItem('pedeai_mode');
+sessionStorage.setItem('pedeai_mode', mode);
+// Só invalida o cache DOM ao trocar entre products/restaurants.
+// Ao voltar de classifieds, o cache ainda é válido.
+if (mode !== 'classifieds' && modoAnterior !== 'classifieds') {
+    sessionStorage.removeItem('pedeai_dom_cache');
+}
 
-                const featuredStrip   = document.getElementById('featuredStrip');
-                const chipContainer   = document.getElementById('chipContainer');
-                const gridProdutos    = document.getElementById('products-container');
-                const classifiedsRoot = document.getElementById('classifieds-root');
-                const navVender       = document.getElementById('nav-vender');
+const featuredStrip   = document.getElementById('featuredStrip');
+const chipContainer   = document.getElementById('chipContainer');
+const gridProdutos    = document.getElementById('products-container');
+const classifiedsRoot = document.getElementById('classifieds-root');
+const navVender       = document.getElementById('nav-vender');
 
-                const mainHeader = document.getElementById('dynamicHeader');
+const mainHeader = document.getElementById('dynamicHeader');
 
-                if (mode === 'classifieds') {
-                    if (mainHeader)      mainHeader.style.display      = 'none';
-                    if (featuredStrip)   featuredStrip.style.display   = 'none';
-                    if (chipContainer)   chipContainer.style.display   = 'none';
-                    if (gridProdutos)    gridProdutos.style.display    = 'none';
-                    if (classifiedsRoot) classifiedsRoot.style.display = 'block';
-                    if (navVender)       navVender.style.display       = 'flex';
-                } else {
-                    if (mainHeader)      mainHeader.style.display      = 'block';
-                    if (featuredStrip)   featuredStrip.style.display   = 'block';
-                    if (chipContainer)   chipContainer.style.display   = 'block';
-                    if (gridProdutos)    gridProdutos.style.display    = 'block';
-                    if (classifiedsRoot) classifiedsRoot.style.display = 'none';
-                    if (navVender)       navVender.style.display       = 'none';
-                }
+if (mode === 'classifieds') {
+    if (mainHeader)      mainHeader.style.display      = 'none';
+    if (featuredStrip)   featuredStrip.style.display   = 'none';
+    if (chipContainer)   chipContainer.style.display   = 'none';
+    if (gridProdutos)    gridProdutos.style.display    = 'none';
+    if (classifiedsRoot) classifiedsRoot.style.display = 'block';
+    if (navVender)       navVender.style.display       = 'flex';
+} else {
+    if (mainHeader)      mainHeader.style.display      = 'block';
+    if (featuredStrip)   featuredStrip.style.display   = 'block';
+    if (chipContainer)   chipContainer.style.display   = 'block';
+    if (gridProdutos)    gridProdutos.style.display    = 'block';
+    if (classifiedsRoot) classifiedsRoot.style.display = 'none';
+    if (navVender)       navVender.style.display       = 'none';
+}
 
-                window.dispatchEvent(new CustomEvent('changeMode', { detail: mode }));
+// Dispara o evento de mudança de modo (que recria carrossel, filtros e produtos)
+window.dispatchEvent(new CustomEvent('changeMode', { detail: mode }));
 
-                // Aguarda o próximo repaint antes de esconder o overlay
-                requestAnimationFrame(() => {
-                    requestAnimationFrame(() => {
-                        if (window.IosOverlayManager) window.IosOverlayManager.hideAll();
-                    });
-                });
-
-            }, 200);
+// Mantém o overlay de transição visível por tempo suficiente para a reconstrução do conteúdo
+setTimeout(() => {
+    if (window.IosOverlayManager) window.IosOverlayManager.hideAll();
+}, 300);
         }
 
         (function() {
