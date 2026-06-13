@@ -441,13 +441,10 @@
                 }
             }
 
-            // Atualiza a cor da barra de status (meta tag theme-color) instantaneamente
+            // Status bar branca enquanto o overlay cobre a tela — elimina a faixa colorida do topo
             const themeColorMeta = document.querySelector('meta[name="theme-color"]');
             if (themeColorMeta) {
-                let newColor = '#ee4d2d'; // padrão produtos
-                if (mode === 'restaurants') newColor = '#ea1d2c';
-                if (mode === 'classifieds') newColor = '#0077ff';
-                themeColorMeta.setAttribute('content', newColor);
+                themeColorMeta.setAttribute('content', '#ffffff');
             }
 
             // Overlay cobre a tela no Frame N+1 — DOM só muda no Frame N+2
@@ -494,6 +491,13 @@ window.dispatchEvent(new CustomEvent('changeMode', { detail: mode }));
 // Mantém o overlay de transição visível por tempo suficiente para a reconstrução do conteúdo
 setTimeout(() => {
     if (window.IosOverlayManager) window.IosOverlayManager.hideAll();
+    // Restaura a cor do status bar para o novo modo, simultâneo ao overlay sumir
+    if (themeColorMeta) {
+        let finalColor = '#ee4d2d';
+        if (mode === 'restaurants') finalColor = '#ea1d2c';
+        if (mode === 'classifieds') finalColor = '#0077ff';
+        themeColorMeta.setAttribute('content', finalColor);
+    }
 }, 300);
         });
     });
