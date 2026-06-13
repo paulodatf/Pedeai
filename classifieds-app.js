@@ -277,7 +277,10 @@ function mostrarEstadoOfflineClassifieds() {
         btn.addEventListener('click', () => {
             if (!navigator.onLine) {
                 btn.textContent = 'Sem conexão...';
-                setTimeout(() => { btn.textContent = 'Tentar novamente'; }, 2000);
+                setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => toast.remove(), 300);
+}, 3000);
                 return;
             }
             primeiraCarga = false;

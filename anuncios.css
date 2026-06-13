@@ -368,10 +368,4 @@
 /* ─────────────────────────────────────────────────────────────── */
 #classifieds-root {
     display: none;               /* ocultado por padrão; JS controla */
-    animation: cl-moduleEnter 0.25s ease;
-}
-
-@keyframes cl-moduleEnter {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0);   }
 }
