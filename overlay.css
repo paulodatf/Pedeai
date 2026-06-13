@@ -23,6 +23,10 @@
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
+    /* Pré-promove a camada de composição, mesmo enquanto oculto */
+    -webkit-transform: translateZ(1px);
+    transform: translateZ(1px);
+    will-change: transform, opacity;
     /* Saída: quase instantânea — elimina o resquício branco */
     transition: opacity 0.08s linear,
                 visibility 0s 0.08s;
@@ -42,6 +46,9 @@
     /* Entrada: instantânea — cobre a tela antes de qualquer mudança de DOM */
     transition: opacity 0s,
                 visibility 0s 0s;
+    /* Força camada de composição própria, acima da camada do header sticky no WKWebView */
+    -webkit-transform: translateZ(1px);
+    transform: translateZ(1px);
 }
 
 /* Efeito animado de fundo premium sem qualquer transparência */
