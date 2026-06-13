@@ -450,7 +450,9 @@
                 themeColorMeta.setAttribute('content', newColor);
             }
 
-            // Aplica as mudanças de tema e visibilidade imediatamente (sem delay)
+            // Overlay cobre a tela no Frame N+1 — DOM só muda no Frame N+2
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
 document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
 element.classList.add('active');
 document.body.className = 'mode-' + mode;
@@ -493,6 +495,8 @@ window.dispatchEvent(new CustomEvent('changeMode', { detail: mode }));
 setTimeout(() => {
     if (window.IosOverlayManager) window.IosOverlayManager.hideAll();
 }, 300);
+        });
+    });
         }
 
         (function() {

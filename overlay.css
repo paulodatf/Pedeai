@@ -10,19 +10,22 @@
 .ios-transition-overlay {
     position: fixed;
     top: 0;
+    right: 0;
+    bottom: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     z-index: 999999;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    background: #ffffff;
+    overflow: hidden;
     opacity: 0;
     pointer-events: none;
     visibility: hidden;
-    transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
-                visibility 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Saída: quase instantânea — elimina o resquício branco */
+    transition: opacity 0.08s linear,
+                visibility 0s 0.08s;
 }
 
 /* ==========================================================================
@@ -36,6 +39,9 @@
     opacity: 1;
     pointer-events: auto;
     visibility: visible;
+    /* Entrada: instantânea — cobre a tela antes de qualquer mudança de DOM */
+    transition: opacity 0s,
+                visibility 0s 0s;
 }
 
 /* Efeito animado de fundo premium sem qualquer transparência */
